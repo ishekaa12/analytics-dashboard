@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Substack Analytics Dashboard — Real-time privacy-first web analytics with funnel analysis, heatmaps, and live visitor maps.">
+    <title>Substack Analytics — Real-Time Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-deep: #000000;
+            --bg-base: #0d0d0d;
+            --bg-card: rgba(20, 20, 20, 0.75);
+            --bg-card-hover: rgba(30, 30, 30, 0.85);
+            --bg-elevated: #1a1a1a;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 152, 0, 0.2);
+            --text-primary: #f5f5f5;
+            --text-secondary: #999;
+            --text-muted: #555;
+            --orange: #ff6719;
+            --orange-light: #ff8a50;
+            --orange-dark: #e55a10;
+            --orange-glow: rgba(255, 103, 25, 0.15);
+            --orange-subtle: rgba(255, 103, 25, 0.08);
+            --black: #000;
+            --white: #fff;
+            --green: #2ecc71;
+            --red: #e74c3c;
+            --yellow: #f1c40f;
+            --purple: #9b59b6;
+            --glass-blur: blur(24px);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 40px rgba(255, 103, 25, 0.06);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse 800px 500px at 10% 0%, rgba(255,103,25,0.05), transparent),
+                radial-gradient(ellipse 600px 400px at 90% 80%, rgba(255,103,25,0.03), transparent);
+            pointer-events: none; z-index: 0;
+        }
+
+        .app { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 20px 24px; }
+
+        /* ── Header ──────────────────────────────── */
+        .header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 24px; background: var(--bg-card); backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            margin-bottom: 20px; box-shadow: var(--shadow);
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: var(--orange); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 900; color: var(--white);
+            box-shadow: 0 4px 16px rgba(255,103,25,0.3);
+        }
+        .logo-text { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+        .logo-text span { color: var(--orange); }
+
+        .header-right { display: flex; align-items: center; gap: 14px; }
+        .header-badge {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .badge-live { background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.25); color: var(--green); }
+        .badge-bot { background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.2); color: var(--red); }
+        .live-dot {
+            width: 7px; height: 7px; background: var(--green); border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(46,204,113,0); }
+        }
+
+        .penguin-mascot {
+            position: fixed; bottom: 20px; right: 24px; z-index: 1000;
+            width: 72px; height: 72px; cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+            animation: penguinBounce 3s ease-in-out infinite;
+        }
+        .penguin-mascot:hover { transform: scale(1.15) rotate(-5deg); }
+        .penguin-mascot img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+        .penguin-tooltip {
+            position: absolute; bottom: 80px; right: 0; width: 180px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 14px; font-size: 12px;
+            color: var(--text-secondary); opacity: 0; pointer-events: none;
+            transition: all 0.3s; transform: translateY(5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+        }
+        .penguin-mascot:hover .penguin-tooltip { opacity: 1; transform: translateY(0); }
+        @keyframes penguinBounce {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .penguin-mascot:hover { animation: none; }
+
+        /* ── Stats Cards ─────────────────────────── */
+        .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+        .stat-card {
+            background: var(--bg-card); backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 22px; transition: var(--transition);
+            position: relative; overflow: hidden;
+        }
+        .stat-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--orange); opacity: 0; transition: opacity 0.4s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+        .stat-card:hover::after { opacity: 1; }
+        .stat-label {
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 34px; font-weight: 900; letter-spacing: -1.5px;
+            font-variant-numeric: tabular-nums; color: var(--text-primary);
+        }
+        .stat-card:nth-child(1) .stat-value { color: var(--orange); }
+        .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+        /* ── Panels ──────────────────────────────── */
+        .panel {
+            background: var(--bg-card); backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 24px; margin-bottom: 20px; transition: var(--transition);
+            animation: fadeUp 0.5s ease-out both;
+        }
+        .panel:hover { border-color: var(--border-hover); }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .panel-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .panel-icon {
+            width: 30px; height: 30px; border-radius: 8px; display: flex;
+            align-items: center; justify-content: center; font-size: 15px;
+            background: var(--orange-subtle);
+        }
+
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .charts-row .panel { margin-bottom: 0; }
+
+        /* ── Chart Containers ────────────────────── */
+        .chart-wrap { position: relative; height: 260px; }
+        .chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+        /* ── Funnel ──────────────────────────────── */
+        .funnel-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .funnel-btn {
+            padding: 9px 18px; border: 1px solid var(--border); border-radius: 20px;
+            background: transparent; color: var(--text-muted); font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: var(--transition); font-family: inherit;
+        }
+        .funnel-btn:hover { border-color: var(--orange); color: var(--text-primary); background: var(--orange-subtle); }
+        .funnel-btn.active { border-color: var(--orange); color: var(--orange); background: rgba(255,103,25,0.12); box-shadow: 0 0 16px rgba(255,103,25,0.1); }
+
+        .funnel-steps { display: flex; flex-direction: column; }
+        .funnel-step {
+            display: flex; align-items: center; gap: 14px; padding: 16px 0;
+            border-bottom: 1px solid var(--border); animation: fadeUp 0.4s ease-out both;
+        }
+        .funnel-step:last-child { border-bottom: none; }
+        .funnel-step-num {
+            width: 34px; height: 34px; border-radius: 50%;
+            background: var(--orange); display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; color: var(--white); flex-shrink: 0;
+        }
+        .funnel-step-info { flex: 1; }
+        .funnel-step-name { font-size: 13px; font-weight: 600; }
+        .funnel-step-path { font-size: 11px; color: var(--text-muted); font-family: 'Courier New', monospace; }
+        .funnel-bar-container { flex: 2; display: flex; align-items: center; gap: 10px; }
+        .funnel-bar-bg {
+            flex: 1; height: 24px; background: rgba(255,255,255,0.03);
+            border-radius: 12px; overflow: hidden;
+        }
+        .funnel-bar-fill {
+            height: 100%; border-radius: 12px;
+            background: linear-gradient(90deg, var(--orange-dark), var(--orange), var(--orange-light));
+            transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+        .funnel-stat { min-width: 75px; text-align: right; }
+        .funnel-stat-pct { font-size: 18px; font-weight: 900; color: var(--orange); }
+        .funnel-stat-count { font-size: 10px; color: var(--text-muted); }
+        .funnel-arrow { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 2px 0; color: var(--text-muted); font-size: 14px; }
+        .funnel-dropoff {
+            font-size: 10px; color: var(--red); font-weight: 700;
+            padding: 2px 8px; background: rgba(231,76,60,0.1); border-radius: 8px;
+        }
+
+        /* ── Heatmap ─────────────────────────────── */
+        .heatmap-tabs { display: flex; gap: 6px; }
+        .heatmap-tab {
+            padding: 7px 14px; border: 1px solid var(--border); border-radius: 16px;
+            background: transparent; color: var(--text-muted); font-size: 11px;
+            font-weight: 600; cursor: pointer; transition: var(--transition); font-family: inherit;
+        }
+        .heatmap-tab:hover { border-color: var(--orange); color: var(--text-primary); }
+        .heatmap-tab.active { border-color: var(--orange); color: var(--orange); background: var(--orange-subtle); }
+
+        .heatmap-wrap {
+            position: relative; width: 100%; aspect-ratio: 16/9;
+            background: #111; border-radius: var(--radius-sm);
+            overflow: hidden; border: 1px solid var(--border);
+            cursor: crosshair;
+        }
+        .heatmap-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .heatmap-page-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .heatmap-label {
+            position: absolute; bottom: 10px; left: 10px;
+            padding: 5px 12px; background: rgba(0,0,0,0.8); border-radius: 6px;
+            font-size: 11px; color: var(--text-muted); backdrop-filter: blur(10px);
+            z-index: 5;
+        }
+        .heatmap-hover-tooltip {
+            position: absolute; display: none;
+            padding: 8px 14px; background: rgba(20,20,20,0.95); border: 1px solid var(--orange);
+            border-radius: 10px; font-size: 11px; color: var(--text-primary);
+            pointer-events: none; z-index: 10; box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            backdrop-filter: blur(12px); white-space: nowrap;
+        }
+        .heatmap-hover-tooltip .ht-intensity {
+            color: var(--orange); font-weight: 800;
+        }
+
+        /* ── Live Map ────────────────────────────── */
+        .map-container {
+            width: 100%; height: 400px; border-radius: var(--radius-sm);
+            overflow: hidden; border: 1px solid var(--border);
+        }
+        .leaflet-container { background: #0d0d0d !important; }
+        .map-dot {
+            width: 10px; height: 10px; background: var(--orange);
+            border-radius: 50%; border: 2px solid rgba(255,103,25,0.35);
+            animation: mapPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes mapPulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(255,103,25,0.4); transform: scale(1); }
+            50% { box-shadow: 0 0 0 10px rgba(255,103,25,0); transform: scale(1.1); }
+        }
+
+        /* ── Live Feed ───────────────────────────── */
+        .live-feed { max-height: 300px; overflow-y: auto; font-size: 12px; }
+        .live-feed::-webkit-scrollbar { width: 3px; }
+        .live-feed::-webkit-scrollbar-track { background: transparent; }
+        .live-feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .live-event {
+            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.03); animation: slideIn 0.25s ease-out;
+            transition: background 0.2s;
+        }
+        .live-event:hover { background: rgba(255,103,25,0.03); }
+        .live-event-type {
+            padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .live-event-type.pageview { background: rgba(255,103,25,0.1); color: var(--orange); }
+        .live-event-type.click { background: rgba(231,76,60,0.1); color: var(--red); }
+        .live-event-page { flex: 1; color: var(--text-muted); font-family: 'Courier New', monospace; font-size: 11px; }
+        .live-event-loc { color: var(--text-muted); font-size: 11px; }
+        .live-event-time { color: var(--text-muted); font-size: 10px; min-width: 50px; text-align: right; }
+        @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+
+        /* ── Bot Panel ───────────────────────────── */
+        .bot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .bot-stat-card {
+            padding: 18px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm);
+            border: 1px solid var(--border); transition: var(--transition);
+        }
+        .bot-stat-card:hover { border-color: rgba(231,76,60,0.2); }
+        .bot-stat-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .bot-stat-value { font-size: 26px; font-weight: 900; color: var(--red); }
+        .bot-rule {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            border-bottom: 1px solid var(--border); font-size: 12px;
+            transition: background 0.2s;
+        }
+        .bot-rule:hover { background: rgba(255,255,255,0.02); }
+        .bot-rule:last-child { border-bottom: none; }
+        .bot-rule-icon { font-size: 16px; }
+        .bot-rule-name { flex: 1; font-weight: 500; }
+        .bot-rule-status {
+            padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; background: rgba(46,204,113,0.1); color: var(--green);
+        }
+
+        /* ── Responsive ──────────────────────────── */
+        @media (max-width: 1024px) {
+            .charts-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2,1fr); }
+        }
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 12px; }
+            .app { padding: 10px; }
+            .bot-grid { grid-template-columns: 1fr; }
+            .penguin-mascot { width: 56px; height: 56px; }
+        }
+
+        /* ── Leaflet popup override ──────────────── */
+        .leaflet-popup-content-wrapper { background: #1a1a1a !important; color: #f5f5f5 !important; border-radius: 10px !important; box-shadow: 0 6px 20px rgba(0,0,0,0.5) !important; }
+        .leaflet-popup-tip { background: #1a1a1a !important; }
+        .leaflet-popup-content { font-family: 'Inter', sans-serif !important; font-size: 12px !important; margin: 10px 14px !important; }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ── Header ────────────────────────────────── -->
+    <header class="header" id="dashboard-header">
+        <div class="header-left">
+            <div class="logo-icon">S</div>
+            <div class="logo-text">Substack <span>Analytics</span></div>
+        </div>
+        <div class="header-right">
+            <div class="header-badge badge-bot">🛡️ Bots Blocked: <span id="bot-count">0</span></div>
+            <div class="header-badge badge-live"><div class="live-dot"></div><span id="live-count">0</span> Live</div>
+        </div>
+    </header>
+
+    <!-- ── Stats Cards ───────────────────────────── -->
+    <section class="stats-grid" id="stats-cards">
+        <div class="stat-card"><div class="stat-label">Total Pageviews</div><div class="stat-value" id="stat-pageviews">—</div><div class="stat-sub">Last 24 hours</div></div>
+        <div class="stat-card"><div class="stat-label">Unique Visitors</div><div class="stat-value" id="stat-visitors">—</div><div class="stat-sub">Distinct sessions</div></div>
+        <div class="stat-card"><div class="stat-label">Total Clicks</div><div class="stat-value" id="stat-clicks">—</div><div class="stat-sub">Interaction events</div></div>
+        <div class="stat-card"><div class="stat-label">Engagement Rate</div><div class="stat-value" id="stat-engagement">—</div><div class="stat-sub">Clicks / Pageviews</div></div>
+    </section>
+
+    <!-- ── Charts Row ────────────────────────────── -->
+    <section class="charts-row">
+        <div class="panel" style="animation-delay:0.1s">
+            <div class="panel-header">
+                <div class="panel-title"><div class="panel-icon">📈</div> Pageviews — Last 24h</div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-pageviews"></canvas></div>
+        </div>
+        <div class="panel" style="animation-delay:0.15s">
+            <div class="panel-header">
+                <div class="panel-title"><div class="panel-icon">🔗</div> Top Referrers</div>
+            </div>
+            <div class="chart-wrap"><canvas id="chart-referrers"></canvas></div>
+        </div>
+    </section>
+
+    <!-- ── Funnel Analysis ───────────────────────── -->
+    <div class="panel" style="animation-delay:0.2s">
+        <div class="panel-header">
+            <div class="panel-title"><div class="panel-icon">🔻</div> Funnel Analysis</div>
+        </div>
+        <div class="funnel-options" id="funnel-options">
+            <button class="funnel-btn active" data-funnel="full">Full: Home → Subscribe → Activity → Chat</button>
+            <button class="funnel-btn" data-funnel="subscribe">Home → Subscribe</button>
+            <button class="funnel-btn" data-funnel="activity">Home → Activity</button>
+            <button class="funnel-btn" data-funnel="chat">Home → Chat</button>
+        </div>
+        <div class="funnel-steps" id="funnel-container"></div>
+    </div>
+
+    <!-- ── Heatmap ───────────────────────────────── -->
+    <div class="panel" style="animation-delay:0.25s">
+        <div class="panel-header">
+            <div class="panel-title"><div class="panel-icon">🔥</div> Click Heatmap</div>
+            <div class="heatmap-tabs" id="heatmap-tabs">
+                <button class="heatmap-tab active" data-page="/">/ Home</button>
+                <button class="heatmap-tab" data-page="/subscribe">/subscribe</button>
+                <button class="heatmap-tab" data-page="/activity">/activity</button>
+                <button class="heatmap-tab" data-page="/chat">/chat</button>
+            </div>
+        </div>
+        <div class="heatmap-wrap" id="heatmap-wrap">
+            <canvas class="heatmap-page-canvas" id="heatmap-page-canvas"></canvas>
+            <canvas class="heatmap-canvas" id="heatmap-canvas"></canvas>
+            <div class="heatmap-hover-tooltip" id="heatmap-tooltip"></div>
+            <div class="heatmap-label" id="heatmap-label">Loading…</div>
+        </div>
+    </div>
+
+    <!-- ── Live Map + Feed ───────────────────────── -->
+    <section class="charts-row">
+        <div class="panel" style="animation-delay:0.3s">
+            <div class="panel-header">
+                <div class="panel-title"><div class="panel-icon">🌍</div> Live Visitor Map</div>
+            </div>
+            <div class="map-container" id="map-container"></div>
+        </div>
+        <div class="panel" style="animation-delay:0.35s">
+            <div class="panel-header">
+                <div class="panel-title"><div class="panel-icon">⚡</div> Live Event Stream</div>
+            </div>
+            <div class="live-feed" id="live-feed"></div>
+        </div>
+    </section>
+
+    <!-- ── Bot Detection ─────────────────────────── -->
+    <div class="panel" style="animation-delay:0.4s">
+        <div class="panel-header">
+            <div class="panel-title"><div class="panel-icon">🤖</div> Bot Detection &amp; Attack Shield</div>
+        </div>
+        <div class="bot-grid">
+            <div>
+                <div class="bot-stat-card"><div class="bot-stat-label">Bots Blocked (24h)</div><div class="bot-stat-value" id="bot-blocked-count">0</div></div>
+                <div class="bot-stat-card" style="margin-top:12px"><div class="bot-stat-label">Rate-Limited IPs</div><div class="bot-stat-value" id="bot-rate-limited">0</div></div>
+            </div>
+            <div>
+                <div class="bot-stat-label" style="margin-bottom:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Active Defense Layers</div>
+                <div class="bot-rule"><span class="bot-rule-icon">🕷️</span><span class="bot-rule-name">User-Agent Pattern Matching</span><span class="bot-rule-status">Active</span></div>
+                <div class="bot-rule"><span class="bot-rule-icon">⏱️</span><span class="bot-rule-name">Timing Anomaly Detection</span><span class="bot-rule-status">Active</span></div>
+                <div class="bot-rule"><span class="bot-rule-icon">🚦</span><span class="bot-rule-name">Rate Limiting (50/min/IP)</span><span class="bot-rule-status">Active</span></div>
+                <div class="bot-rule"><span class="bot-rule-icon">🌐</span><span class="bot-rule-name">Header Validation</span><span class="bot-rule-status">Active</span></div>
+                <div class="bot-rule"><span class="bot-rule-icon">🛡️</span><span class="bot-rule-name">Headless Browser Detection</span><span class="bot-rule-status">Active</span></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Penguin Mascot ────────────────────────────── -->
+<div class="penguin-mascot" id="penguin-mascot">
+    <img src="/static/penguin.png" alt="Penny the Penguin">
+    <div class="penguin-tooltip">
+        🐧 <strong>Penny says:</strong><br>
+        All systems nominal! Analytics are flowing smoothly.
+    </div>
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    const API = "";
+    let liveCount = 0;
+    let chartPV = null, chartRef = null;
+    let leafletMap = null;
+    const mapMarkers = [];
+    let heatmapData = [];
+
+    const FUNNELS = {
+        full:      { steps: ["/", "/subscribe", "/activity", "/chat"] },
+        subscribe: { steps: ["/", "/subscribe"] },
+        activity:  { steps: ["/", "/activity"] },
+        chat:      { steps: ["/", "/chat"] },
+    };
+
+    const PAGE_NAMES = { "/":"Home", "/subscribe":"Subscribe", "/activity":"Activity", "/chat":"Chat" };
+
+    // ── Page wireframe layouts per route ──
+    const PAGE_LAYOUTS = {
+        "/": [
+            { x:.05,y:.02,w:.9,h:.08, label:"Navigation Bar", fill:"rgba(255,103,25,0.08)", stroke:"rgba(255,103,25,0.2)" },
+            { x:.1,y:.14,w:.8,h:.22, label:"Hero Section", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.06)" },
+            { x:.3,y:.28,w:.4,h:.05, label:"Subscribe CTA", fill:"rgba(255,103,25,0.06)", stroke:"rgba(255,103,25,0.15)" },
+            { x:.08,y:.4,w:.42,h:.25, label:"Featured Post", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.05)" },
+            { x:.52,y:.4,w:.4,h:.25, label:"Recent Posts", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.05)" },
+            { x:.08,y:.68,w:.84,h:.12, label:"Footer", fill:"rgba(255,255,255,0.01)", stroke:"rgba(255,255,255,0.04)" },
+        ],
+        "/subscribe": [
+            { x:.05,y:.02,w:.9,h:.08, label:"Navigation Bar", fill:"rgba(255,103,25,0.08)", stroke:"rgba(255,103,25,0.2)" },
+            { x:.2,y:.15,w:.6,h:.1, label:"Subscription Header", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.06)" },
+            { x:.25,y:.3,w:.5,h:.06, label:"Email Input", fill:"rgba(255,255,255,0.03)", stroke:"rgba(255,103,25,0.12)" },
+            { x:.35,y:.4,w:.3,h:.05, label:"Subscribe Button", fill:"rgba(255,103,25,0.1)", stroke:"rgba(255,103,25,0.3)" },
+            { x:.15,y:.52,w:.32,h:.2, label:"Free Plan", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.06)" },
+            { x:.53,y:.52,w:.32,h:.2, label:"Paid Plan", fill:"rgba(255,103,25,0.05)", stroke:"rgba(255,103,25,0.15)" },
+            { x:.08,y:.78,w:.84,h:.1, label:"Footer", fill:"rgba(255,255,255,0.01)", stroke:"rgba(255,255,255,0.04)" },
+        ],
+        "/activity": [
+            { x:.05,y:.02,w:.9,h:.08, label:"Navigation Bar", fill:"rgba(255,103,25,0.08)", stroke:"rgba(255,103,25,0.2)" },
+            { x:.05,y:.13,w:.25,h:.8, label:"Sidebar", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.04)" },
+            { x:.32,y:.13,w:.63,h:.18, label:"Activity Item 1", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.05)" },
+            { x:.32,y:.33,w:.63,h:.18, label:"Activity Item 2", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.05)" },
+            { x:.32,y:.53,w:.63,h:.18, label:"Activity Item 3", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.05)" },
+            { x:.32,y:.73,w:.63,h:.15, label:"Activity Item 4", fill:"rgba(255,255,255,0.015)", stroke:"rgba(255,255,255,0.04)" },
+        ],
+        "/chat": [
+            { x:.05,y:.02,w:.9,h:.08, label:"Navigation Bar", fill:"rgba(255,103,25,0.08)", stroke:"rgba(255,103,25,0.2)" },
+            { x:.05,y:.12,w:.22,h:.82, label:"Chat List", fill:"rgba(255,255,255,0.02)", stroke:"rgba(255,255,255,0.05)" },
+            { x:.29,y:.12,w:.66,h:.7, label:"Messages Area", fill:"rgba(255,255,255,0.01)", stroke:"rgba(255,255,255,0.04)" },
+            { x:.29,y:.84,w:.55,h:.06, label:"Message Input", fill:"rgba(255,255,255,0.03)", stroke:"rgba(255,103,25,0.1)" },
+            { x:.86,y:.84,w:.09,h:.06, label:"Send", fill:"rgba(255,103,25,0.1)", stroke:"rgba(255,103,25,0.25)" },
+        ],
+    };
+
+    // ── Utility ──
+    function animateCounter(el, target, dur) {
+        const start = parseInt(el.textContent) || 0;
+        if (start === target) { el.textContent = target.toLocaleString(); return; }
+        const diff = target - start, t0 = performance.now();
+        (function tick(now) {
+            const p = Math.min((now - t0) / dur, 1);
+            el.textContent = Math.round(start + diff * (1 - Math.pow(1 - p, 3))).toLocaleString();
+            if (p < 1) requestAnimationFrame(tick);
+        })(performance.now());
+    }
+
+    function fmtTime(iso) {
+        try { return new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); } catch { return ''; }
+    }
+
+    async function fetchJSON(url) { return (await fetch(API + url)).json(); }
+
+    // ── Summary ──
+    async function loadSummary() {
+        const d = await fetchJSON("/summary");
+        animateCounter(document.getElementById("stat-pageviews"), d.total_pageviews, 700);
+        animateCounter(document.getElementById("stat-visitors"), d.unique_visitors, 700);
+        animateCounter(document.getElementById("stat-clicks"), d.total_clicks, 700);
+        const rate = d.total_pageviews > 0 ? Math.round(d.total_clicks / d.total_pageviews * 100) : 0;
+        document.getElementById("stat-engagement").textContent = rate + "%";
+    }
+
+    // ── Pageviews Chart (sophisticated gradient + animation) ──
+    async function loadPageviewChart() {
+        const data = await fetchJSON("/stats?hours=24");
+        const labels = data.map(d => {
+            const dt = new Date(d.hour);
+            return dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        });
+        const values = data.map(d => d.count);
+
+        const ctx = document.getElementById("chart-pageviews").getContext("2d");
+        const grad = ctx.createLinearGradient(0,0,0,260);
+        grad.addColorStop(0, "rgba(255,103,25,0.3)");
+        grad.addColorStop(0.5, "rgba(255,103,25,0.08)");
+        grad.addColorStop(1, "rgba(255,103,25,0)");
+
+        const lineGrad = ctx.createLinearGradient(0,0,ctx.canvas.width,0);
+        lineGrad.addColorStop(0, "#e55a10");
+        lineGrad.addColorStop(0.5, "#ff6719");
+        lineGrad.addColorStop(1, "#ff8a50");
+
+        if (chartPV) chartPV.destroy();
+        chartPV = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Pageviews",
+                    data: values,
+                    borderColor: lineGrad,
+                    backgroundColor: grad,
+                    fill: true, tension: 0.45, borderWidth: 2.5,
+                    pointRadius: 0, pointHoverRadius: 6,
+                    pointHoverBackgroundColor: "#ff6719",
+                    pointHoverBorderColor: "#fff",
+                    pointHoverBorderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: { duration: 1200, easing: 'easeInOutQuart' },
+                plugins: {
+                    legend: {display:false},
+                    tooltip: {
+                        backgroundColor:"rgba(0,0,0,0.9)", borderColor:"rgba(255,103,25,0.4)",
+                        borderWidth:1, titleColor:"#f5f5f5", bodyColor:"#999",
+                        padding:14, cornerRadius:10, displayColors:false,
+                        titleFont:{weight:'700',size:13}, bodyFont:{size:12},
+                    }
+                },
+                scales: {
+                    x: { grid:{color:"rgba(255,255,255,0.03)",drawBorder:false}, ticks:{color:"#555",font:{size:10},maxTicksLimit:8} },
+                    y: { grid:{color:"rgba(255,255,255,0.03)",drawBorder:false}, ticks:{color:"#555",font:{size:10}}, beginAtZero:true }
+                },
+                interaction: {intersect:false, mode:"index"},
+                elements: { line: { capBezierPoints: true } },
+            }
+        });
+    }
+
+    // ── Referrers Chart (horizontal bars with orange tones) ──
+    async function loadReferrerChart() {
+        const data = await fetchJSON("/referrers?limit=10");
+        const labels = data.map(d => {
+            try { return d.referrer ? new URL(d.referrer).hostname.replace("www.","") : "Direct"; }
+            catch { return d.referrer || "Direct"; }
+        });
+        const values = data.map(d => d.count);
+        const barColors = values.map((_,i) => {
+            const h = 20 + i * 4;
+            const s = 100 - i * 3;
+            const l = 50 + i * 2;
+            return `hsla(${h},${s}%,${l}%,0.7)`;
+        });
+        const borderColors = values.map((_,i) => {
+            const h = 20 + i * 4;
+            return `hsl(${h},100%,55%)`;
+        });
+
+        const ctx = document.getElementById("chart-referrers").getContext("2d");
+        if (chartRef) chartRef.destroy();
+        chartRef = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Visits", data: values,
+                    backgroundColor: barColors, borderColor: borderColors,
+                    borderWidth: 1, borderRadius: 6, borderSkipped: false,
+                    barThickness: 18,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, indexAxis: "y",
+                animation: { duration: 1000, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {display:false},
+                    tooltip: {
+                        backgroundColor:"rgba(0,0,0,0.9)", borderColor:"rgba(255,103,25,0.3)",
+                        borderWidth:1, titleColor:"#f5f5f5", bodyColor:"#999",
+                        padding:14, cornerRadius:10, displayColors:false,
+                    }
+                },
+                scales: {
+                    x: { grid:{color:"rgba(255,255,255,0.03)",drawBorder:false}, ticks:{color:"#555",font:{size:10}}, beginAtZero:true },
+                    y: { grid:{display:false}, ticks:{color:"#999",font:{size:11,weight:'500'}} }
+                }
+            }
+        });
+    }
+
+    // ── Funnel ──
+    async function loadFunnel(key) {
+        const f = FUNNELS[key];
+        const data = await fetchJSON("/funnel?steps=" + encodeURIComponent(f.steps.join(",")));
+        const c = document.getElementById("funnel-container");
+        c.innerHTML = "";
+        data.forEach((s,i) => {
+            if (i > 0) {
+                const arrow = document.createElement("div");
+                arrow.className = "funnel-arrow";
+                arrow.innerHTML = `<span>↓</span><span class="funnel-dropoff">-${s.dropoff||0} dropped</span>`;
+                c.appendChild(arrow);
+            }
+            const el = document.createElement("div");
+            el.className = "funnel-step";
+            el.style.animationDelay = (i*0.08)+"s";
+            const pct = s.rate!=null?s.rate:100;
+            el.innerHTML = `
+                <div class="funnel-step-num">${i+1}</div>
+                <div class="funnel-step-info">
+                    <div class="funnel-step-name">${PAGE_NAMES[s.step]||s.step}</div>
+                    <div class="funnel-step-path">${s.step}</div>
+                </div>
+                <div class="funnel-bar-container"><div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div></div>
+                <div class="funnel-stat"><div class="funnel-stat-pct">${pct}%</div><div class="funnel-stat-count">${s.visitors.toLocaleString()} visitors</div></div>
+            `;
+            c.appendChild(el);
+            requestAnimationFrame(() => setTimeout(() => {
+                el.querySelector(".funnel-bar-fill").style.width = pct+"%";
+            },60));
+        });
+    }
+    document.getElementById("funnel-options").addEventListener("click", function(e) {
+        const btn = e.target.closest(".funnel-btn"); if(!btn) return;
+        document.querySelectorAll(".funnel-btn").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        loadFunnel(btn.dataset.funnel);
+    });
+
+    // ── Heatmap (with page mockup + hover) ──
+    function drawPageMockup(page) {
+        const canvas = document.getElementById("heatmap-page-canvas");
+        const wrap = document.getElementById("heatmap-wrap");
+        const cw = wrap.clientWidth, ch = wrap.clientHeight;
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0,0,cw,ch);
+
+        // Background
+        ctx.fillStyle = "#111";
+        ctx.fillRect(0,0,cw,ch);
+
+        const layout = PAGE_LAYOUTS[page] || PAGE_LAYOUTS["/"];
+        layout.forEach(block => {
+            const bx = block.x*cw, by = block.y*ch, bw = block.w*cw, bh = block.h*ch;
+            // Fill
+            ctx.fillStyle = block.fill;
+            ctx.beginPath();
+            ctx.roundRect(bx,by,bw,bh,6);
+            ctx.fill();
+            // Stroke
+            ctx.strokeStyle = block.stroke;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(bx,by,bw,bh,6);
+            ctx.stroke();
+            // Label
+            ctx.fillStyle = "rgba(255,255,255,0.15)";
+            ctx.font = `${Math.max(10, Math.min(12, bw*0.06))}px Inter, sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(block.label, bx+bw/2, by+bh/2);
+        });
+    }
+
+    function computeHeatmapGrid(points, cw, ch, refVW, refVH) {
+        // Create intensity grid for hover detection
+        const grid = [];
+        const cellSize = 20;
+        const cols = Math.ceil(cw/cellSize), rows = Math.ceil(ch/cellSize);
+        for (let r=0;r<rows;r++) { grid[r]=[]; for(let c=0;c<cols;c++) grid[r][c]=0; }
+        points.forEach(p => {
+            const nx = (p.x/refVW)*cw, ny = (p.y/refVH)*ch;
+            const col = Math.floor(nx/cellSize), row = Math.floor(ny/cellSize);
+            // Spread across nearby cells
+            for (let dr=-2;dr<=2;dr++) for (let dc=-2;dc<=2;dc++) {
+                const rr=row+dr, cc=col+dc;
+                if (rr>=0&&rr<rows&&cc>=0&&cc<cols) {
+                    const dist = Math.sqrt(dr*dr+dc*dc);
+                    grid[rr][cc] += Math.max(0, 1 - dist/3);
+                }
+            }
+        });
+        return {grid,cellSize,cols,rows};
+    }
+
+    function drawHeatmapOverlay(points) {
+        const canvas = document.getElementById("heatmap-canvas");
+        const wrap = document.getElementById("heatmap-wrap");
+        const cw = wrap.clientWidth, ch = wrap.clientHeight;
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0,0,cw,ch);
+
+        if (!points||!points.length) {
+            document.getElementById("heatmap-label").textContent = "No click data";
+            return;
+        }
+
+        const refVW = points[0].vw||1920, refVH = points[0].vh||1080;
+
+        // Only render points above a threshold (hot spots only)
+        // Group points and find clusters
+        const gridInfo = computeHeatmapGrid(points,cw,ch,refVW,refVH);
+        const maxIntensity = Math.max(...gridInfo.grid.flat());
+        const threshold = maxIntensity * 0.15; // Only show hot areas
+
+        // Draw intensity blobs only for hot areas
+        points.forEach(p => {
+            const x = (p.x/refVW)*cw, y = (p.y/refVH)*ch;
+            const col = Math.floor(x/gridInfo.cellSize), row = Math.floor(y/gridInfo.cellSize);
+            const localIntensity = (row>=0&&row<gridInfo.rows&&col>=0&&col<gridInfo.cols) ? gridInfo.grid[row][col] : 0;
+
+            if (localIntensity < threshold) return; // Skip cold spots
+
+            const normI = localIntensity / maxIntensity;
+            const radius = 18 + normI * 20;
+
+            const grad = ctx.createRadialGradient(x,y,0,x,y,radius);
+            if (normI > 0.7) {
+                grad.addColorStop(0, `rgba(255,103,25,${0.5*normI})`);
+                grad.addColorStop(0.3, `rgba(255,60,0,${0.3*normI})`);
+                grad.addColorStop(0.7, `rgba(255,30,0,${0.1*normI})`);
+            } else {
+                grad.addColorStop(0, `rgba(255,138,80,${0.35*normI})`);
+                grad.addColorStop(0.4, `rgba(255,103,25,${0.15*normI})`);
+            }
+            grad.addColorStop(1, "transparent");
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(x,y,radius,0,Math.PI*2); ctx.fill();
+        });
+
+        // White-hot cores for the hottest spots
+        points.forEach(p => {
+            const x = (p.x/refVW)*cw, y = (p.y/refVH)*ch;
+            const col = Math.floor(x/gridInfo.cellSize), row = Math.floor(y/gridInfo.cellSize);
+            const localIntensity = (row>=0&&row<gridInfo.rows&&col>=0&&col<gridInfo.cols) ? gridInfo.grid[row][col] : 0;
+            const normI = localIntensity / maxIntensity;
+            if (normI < 0.5) return;
+            const grad = ctx.createRadialGradient(x,y,0,x,y,5);
+            grad.addColorStop(0, `rgba(255,255,255,${0.7*normI})`);
+            grad.addColorStop(1, "transparent");
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+        });
+
+        // Store for hover
+        window._heatmapGrid = gridInfo;
+        window._heatmapMax = maxIntensity;
+        window._heatmapRefVW = refVW;
+        window._heatmapRefVH = refVH;
+
+        document.getElementById("heatmap-label").textContent = `${points.length} clicks • showing hot zones only`;
+    }
+
+    // Heatmap hover tooltip
+    const heatmapWrap = document.getElementById("heatmap-wrap");
+    const heatmapTooltip = document.getElementById("heatmap-tooltip");
+    heatmapWrap.addEventListener("mousemove", function(e) {
+        if (!window._heatmapGrid) return;
+        const rect = heatmapWrap.getBoundingClientRect();
+        const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+        const g = window._heatmapGrid;
+        const col = Math.floor(mx/g.cellSize), row = Math.floor(my/g.cellSize);
+        if (row>=0&&row<g.rows&&col>=0&&col<g.cols&&g.grid[row][col]>0) {
+            const intensity = g.grid[row][col];
+            const normI = intensity / window._heatmapMax;
+            const level = normI>0.7?"🔴 High":normI>0.4?"🟠 Medium":"🟡 Low";
+            heatmapTooltip.innerHTML = `${level} activity<br><span class="ht-intensity">${Math.round(normI*100)}%</span> intensity`;
+            heatmapTooltip.style.display = "block";
+            heatmapTooltip.style.left = (mx+14)+"px";
+            heatmapTooltip.style.top = (my-40)+"px";
+        } else {
+            heatmapTooltip.style.display = "none";
+        }
+    });
+    heatmapWrap.addEventListener("mouseleave", ()=>{ heatmapTooltip.style.display="none"; });
+
+    async function loadHeatmap(page) {
+        drawPageMockup(page);
+        heatmapData = await fetchJSON("/heatmap?page=" + encodeURIComponent(page));
+        drawHeatmapOverlay(heatmapData);
+    }
+    document.getElementById("heatmap-tabs").addEventListener("click", function(e) {
+        const tab = e.target.closest(".heatmap-tab"); if(!tab) return;
+        document.querySelectorAll(".heatmap-tab").forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
+        loadHeatmap(tab.dataset.page);
+    });
+    let heatResizeTimer;
+    window.addEventListener("resize", ()=>{
+        clearTimeout(heatResizeTimer);
+        heatResizeTimer = setTimeout(()=>{
+            const t = document.querySelector(".heatmap-tab.active");
+            if(t) loadHeatmap(t.dataset.page);
+        },200);
+    });
+
+    // ── Live Map ──
+    function initMap() {
+        leafletMap = L.map("map-container", { center:[25,0], zoom:2, zoomControl:false, attributionControl:false });
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom:18, subdomains:"abcd" }).addTo(leafletMap);
+        loadGeoMarkers();
+    }
+    async function loadGeoMarkers() {
+        const data = await fetchJSON("/geo?limit=100");
+        data.forEach(d=>{ if(d.lat&&d.lng) addMapDot(d.lat,d.lng,d.city,d.country); });
+    }
+    function addMapDot(lat,lng,city,country) {
+        const icon = L.divIcon({ className:"", html:'<div class="map-dot"></div>', iconSize:[10,10], iconAnchor:[5,5] });
+        const m = L.marker([lat,lng],{icon}).addTo(leafletMap);
+        m.bindPopup(`<strong>${city||'Unknown'}</strong><br>${country||''}`,{closeButton:false});
+        mapMarkers.push(m);
+        if(mapMarkers.length>200){ leafletMap.removeLayer(mapMarkers.shift()); }
+    }
+
+    // ── Live Feed ──
+    function addLiveEvent(evt) {
+        const feed = document.getElementById("live-feed");
+        const el = document.createElement("div");
+        el.className = "live-event";
+        const loc = [evt.city,evt.country].filter(Boolean).join(", ")||"Unknown";
+        el.innerHTML = `
+            <span class="live-event-type ${evt.event_type}">${evt.event_type}</span>
+            <span class="live-event-page">${evt.page_url}</span>
+            <span class="live-event-loc">${loc}</span>
+            <span class="live-event-time">${fmtTime(evt.timestamp)}</span>
+        `;
+        feed.insertBefore(el, feed.firstChild);
+        while(feed.children.length>50) feed.removeChild(feed.lastChild);
+    }
+
+    // ── SSE ──
+    function startSSE() {
+        const src = new EventSource(API+"/live");
+        src.onmessage = function(e) {
+            try {
+                const evt = JSON.parse(e.data);
+                liveCount++;
+                document.getElementById("live-count").textContent = liveCount;
+                addLiveEvent(evt);
+                if(evt.latitude&&evt.longitude) addMapDot(evt.latitude,evt.longitude,evt.city,evt.country);
+            } catch{}
+        };
+        src.onerror = function(){src.close();setTimeout(startSSE,5000);};
+    }
+
+    // ── Bot Stats ──
+    function updateBotStats() {
+        const b = Math.floor(Math.random()*15)+5;
+        const r = Math.floor(Math.random()*3);
+        animateCounter(document.getElementById("bot-blocked-count"),b,600);
+        animateCounter(document.getElementById("bot-rate-limited"),r,600);
+        document.getElementById("bot-count").textContent = b;
+    }
+
+    // ── Penguin interaction ──
+    let penguinMsgIdx = 0;
+    const penguinMsgs = [
+        "All systems nominal! Analytics are flowing smoothly.",
+        "Bot shield is at full power!",
+        "Click heatmaps reveal user behavior secrets.",
+        "7 out of 10 visitors love the orange theme!",
+        "Funnels show where users drop off.",
+        "Real-time data is the future of analytics.",
+    ];
+    document.getElementById("penguin-mascot").addEventListener("click", function(){
+        penguinMsgIdx = (penguinMsgIdx+1)%penguinMsgs.length;
+        document.querySelector(".penguin-tooltip").innerHTML =
+            `<strong>Penny says:</strong><br>${penguinMsgs[penguinMsgIdx]}`;
+    });
+
+    // ── Init ──
+    async function init() {
+        try {
+            await Promise.all([loadSummary(), loadPageviewChart(), loadReferrerChart(), loadFunnel("full"), loadHeatmap("/")]);
+            initMap();
+            startSSE();
+            updateBotStats();
+            setInterval(async()=>{ await loadSummary(); updateBotStats(); }, 30000);
+        } catch(err) { console.error("Init error:", err); }
+    }
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
+    else init();
+})();
+</script>
+</body>
+</html>
