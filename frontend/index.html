@@ -544,7 +544,7 @@
             </a>
 
             <!-- Substack Card -->
-            <a href="/substack" class="app-card substack" id="substackCard">
+            <a href="/frontend/substack/dashboard.html" class="app-card substack" id="substackCard">
                 <span class="status-badge status-live">Live</span>
                 <div class="card-inner">
                     <div class="card-icon">📰</div>
@@ -587,7 +587,7 @@
         // Fetch live stats for Luma card
         async function loadLumaPreview() {
             try {
-                const res = await fetch('/stats/summary');
+                const res = await fetch('/summary');
                 const d = await res.json();
                 document.getElementById('lumaEvents').textContent =
                     d.total_pageviews > 1000 ? (d.total_pageviews / 1000).toFixed(1) + 'k' : d.total_pageviews;
