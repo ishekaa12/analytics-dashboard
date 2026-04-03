@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Hub — Real-Time Web Intelligence</title>
-    <meta name="description" content="Choose a platform to view real-time analytics, geo tracking, funnel analysis, and bot detection.">
+    <meta name="description"
+        content="Choose a platform to view real-time analytics, geo tracking, funnel analysis, and bot detection.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg-deep: #04060c;
             --bg-base: #080c18;
             --bg-surface: rgba(17, 24, 45, 0.55);
-            --border-subtle: rgba(255,255,255,0.06);
+            --border-subtle: rgba(255, 255, 255, 0.06);
             --text-primary: #f0f2f8;
             --text-secondary: #7d85a0;
             --text-muted: #4a5170;
@@ -27,7 +30,11 @@
             --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -59,31 +66,48 @@
         }
 
         .orb-1 {
-            width: 600px; height: 600px;
+            width: 600px;
+            height: 600px;
             background: rgba(139, 92, 246, 0.12);
-            top: -15%; left: -10%;
+            top: -15%;
+            left: -10%;
             animation-delay: 0s;
         }
 
         .orb-2 {
-            width: 500px; height: 500px;
+            width: 500px;
+            height: 500px;
             background: rgba(6, 182, 212, 0.08);
-            bottom: -20%; right: -10%;
+            bottom: -20%;
+            right: -10%;
             animation-delay: -6s;
         }
 
         .orb-3 {
-            width: 400px; height: 400px;
+            width: 400px;
+            height: 400px;
             background: rgba(59, 130, 246, 0.06);
-            top: 40%; left: 50%;
+            top: 40%;
+            left: 50%;
             animation-delay: -12s;
         }
 
         @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(40px, -30px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.95); }
-            100% { transform: translate(30px, -40px) scale(1.05); }
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(40px, -30px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.95);
+            }
+
+            100% {
+                transform: translate(30px, -40px) scale(1.05);
+            }
         }
 
         /* Grid pattern overlay */
@@ -92,8 +116,8 @@
             inset: 0;
             z-index: 1;
             background-image:
-                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
             background-size: 60px 60px;
             pointer-events: none;
         }
@@ -292,8 +316,13 @@
             font-weight: 800;
         }
 
-        .luma .mini-stat-val { color: var(--accent-purple); }
-        .substack .mini-stat-val { color: var(--accent-orange); }
+        .luma .mini-stat-val {
+            color: var(--accent-purple);
+        }
+
+        .substack .mini-stat-val {
+            color: var(--accent-orange);
+        }
 
         .mini-stat-label {
             font-size: 11px;
@@ -315,9 +344,9 @@
             border-radius: 6px;
             font-size: 11px;
             font-weight: 500;
-            background: rgba(255,255,255,0.04);
+            background: rgba(255, 255, 255, 0.04);
             color: var(--text-secondary);
-            border: 1px solid rgba(255,255,255,0.06);
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
         /* CTA */
@@ -330,17 +359,26 @@
             transition: gap 0.3s var(--ease-out);
         }
 
-        .luma .card-cta { color: var(--accent-purple); }
-        .substack .card-cta { color: var(--accent-orange); }
+        .luma .card-cta {
+            color: var(--accent-purple);
+        }
 
-        .app-card:hover .card-cta { gap: 12px; }
+        .substack .card-cta {
+            color: var(--accent-orange);
+        }
+
+        .app-card:hover .card-cta {
+            gap: 12px;
+        }
 
         .cta-arrow {
             transition: transform 0.3s var(--ease-out);
             font-size: 18px;
         }
 
-        .app-card:hover .cta-arrow { transform: translateX(4px); }
+        .app-card:hover .cta-arrow {
+            transform: translateX(4px);
+        }
 
         /* Status badge */
         .status-badge {
@@ -379,8 +417,15 @@
         }
 
         @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
 
         /* Footer */
@@ -399,150 +444,160 @@
             text-decoration: none;
         }
 
-        .footer a:hover { color: var(--accent-purple); }
+        .footer a:hover {
+            color: var(--accent-purple);
+        }
 
         /* Animations */
         @keyframes fadeDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Responsive */
         @media (max-width: 700px) {
-            .cards { grid-template-columns: 1fr; }
-            .hero-title { font-size: 32px; }
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="bg-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-</div>
-<div class="grid-pattern"></div>
-
-<div class="content">
-    <div class="logo">
-        <div class="logo-icon">A</div>
-        <div class="logo-text"><span>Analytics</span> Hub</div>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
     </div>
+    <div class="grid-pattern"></div>
 
-    <h1 class="hero-title">
-        Choose your <span class="gradient">platform</span>
-    </h1>
-    <p class="hero-subtitle">
-        Real-time analytics, geo tracking, funnel analysis, and bot detection — pick an app to explore.
-    </p>
+    <div class="content">
+        <div class="logo">
+            <div class="logo-icon">A</div>
+            <div class="logo-text"><span>Analytics</span> Hub</div>
+        </div>
 
-    <div class="cards">
-        <!-- Luma Card -->
-        <a href="/dashboard.html" class="app-card luma" id="lumaCard">
-            <span class="status-badge status-live">Live</span>
-            <div class="card-inner">
-                <div class="card-icon">🎪</div>
-                <div class="card-name">Luma</div>
-                <div class="card-desc">Event platform analytics — track RSVPs, attendees, geo distribution, and engagement across live events worldwide.</div>
-                <div class="card-stats">
-                    <div class="mini-stat">
-                        <span class="mini-stat-val" id="lumaEvents">1.9k</span>
-                        <span class="mini-stat-label">Events tracked</span>
-                    </div>
-                    <div class="mini-stat">
-                        <span class="mini-stat-val" id="lumaCities">20</span>
-                        <span class="mini-stat-label">Cities</span>
-                    </div>
-                    <div class="mini-stat">
-                        <span class="mini-stat-val" id="lumaLive">86</span>
-                        <span class="mini-stat-label">Live now</span>
-                    </div>
-                </div>
-                <div class="card-tags">
-                    <span class="tag">Geo Map</span>
-                    <span class="tag">Funnel</span>
-                    <span class="tag">Bot Shield</span>
-                    <span class="tag">Live Feed</span>
-                </div>
-                <div class="card-cta">
-                    Open dashboard <span class="cta-arrow">→</span>
-                </div>
-            </div>
-        </a>
+        <h1 class="hero-title">
+            Choose your <span class="gradient">platform</span>
+        </h1>
+        <p class="hero-subtitle">
+            Real-time analytics, geo tracking, funnel analysis, and bot detection — pick an app to explore.
+        </p>
 
-        <!-- Substack Card -->
-        <div class="app-card substack" id="substackCard" onclick="showComingSoon()">
-            <span class="status-badge status-soon">Coming Soon</span>
-            <div class="card-inner">
-                <div class="card-icon">📰</div>
-                <div class="card-name">Substack</div>
-                <div class="card-desc">Newsletter analytics — monitor subscriber growth, open rates, reading time, and audience retention metrics.</div>
-                <div class="card-stats">
-                    <div class="mini-stat">
-                        <span class="mini-stat-val">—</span>
-                        <span class="mini-stat-label">Subscribers</span>
+        <div class="cards">
+            <!-- Luma Card -->
+            <a href="/dashboard.html" class="app-card luma" id="lumaCard">
+                <span class="status-badge status-live">Live</span>
+                <div class="card-inner">
+                    <div class="card-icon">🎪</div>
+                    <div class="card-name">Luma</div>
+                    <div class="card-desc">Event platform analytics — track RSVPs, attendees, geo distribution, and
+                        engagement across live events worldwide.</div>
+                    <div class="card-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-val" id="lumaEvents">1.9k</span>
+                            <span class="mini-stat-label">Events tracked</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-val" id="lumaCities">20</span>
+                            <span class="mini-stat-label">Cities</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-val" id="lumaLive">86</span>
+                            <span class="mini-stat-label">Live now</span>
+                        </div>
                     </div>
-                    <div class="mini-stat">
-                        <span class="mini-stat-val">—</span>
-                        <span class="mini-stat-label">Open rate</span>
+                    <div class="card-tags">
+                        <span class="tag">Geo Map</span>
+                        <span class="tag">Funnel</span>
+                        <span class="tag">Bot Shield</span>
+                        <span class="tag">Live Feed</span>
                     </div>
-                    <div class="mini-stat">
-                        <span class="mini-stat-val">—</span>
-                        <span class="mini-stat-label">Posts</span>
+                    <div class="card-cta">
+                        Open dashboard <span class="cta-arrow">→</span>
                     </div>
                 </div>
-                <div class="card-tags">
-                    <span class="tag">Subscribers</span>
-                    <span class="tag">Open Rates</span>
-                    <span class="tag">Read Time</span>
-                    <span class="tag">Churn</span>
+            </a>
+
+            <!-- Substack Card -->
+            <a href="/substack" class="app-card substack" id="substackCard">
+                <span class="status-badge status-live">Live</span>
+                <div class="card-inner">
+                    <div class="card-icon">📰</div>
+                    <div class="card-name">Substack</div>
+                    <div class="card-desc">Newsletter analytics — monitor subscriber growth, open rates, reading time,
+                        and audience retention metrics.</div>
+                    <div class="card-stats">
+                        <div class="mini-stat">
+                            <span class="mini-stat-val">—</span>
+                            <span class="mini-stat-label">Subscribers</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-val">—</span>
+                            <span class="mini-stat-label">Open rate</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-val">—</span>
+                            <span class="mini-stat-label">Posts</span>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Subscribers</span>
+                        <span class="tag">Open Rates</span>
+                        <span class="tag">Read Time</span>
+                        <span class="tag">Churn</span>
+                    </div>
+                    <div class="card-cta">
+                        Open dashboard <span class="cta-arrow">→</span>
+                    </div>
                 </div>
-                <div class="card-cta">
-                    Coming soon <span class="cta-arrow">→</span>
-                </div>
-            </div>
+            </a>
         </div>
     </div>
-</div>
 
-<div class="footer">
-    Built with privacy in mind · No cookies · <a href="https://github.com">Open Source</a>
-</div>
+    <div class="footer">
+        Built with privacy in mind · No cookies · <a href="https://github.com">Open Source</a>
+    </div>
 
-<script>
-    // Fetch live stats for Luma card
-    async function loadLumaPreview() {
-        try {
-            const res = await fetch('/stats/summary');
-            const d = await res.json();
-            document.getElementById('lumaEvents').textContent =
-                d.total_pageviews > 1000 ? (d.total_pageviews / 1000).toFixed(1) + 'k' : d.total_pageviews;
-            document.getElementById('lumaLive').textContent = d.live_visitors;
-        } catch (e) {}
-    }
+    <script>
+        // Fetch live stats for Luma card
+        async function loadLumaPreview() {
+            try {
+                const res = await fetch('/stats/summary');
+                const d = await res.json();
+                document.getElementById('lumaEvents').textContent =
+                    d.total_pageviews > 1000 ? (d.total_pageviews / 1000).toFixed(1) + 'k' : d.total_pageviews;
+                document.getElementById('lumaLive').textContent = d.live_visitors;
+            } catch (e) { }
+        }
 
-    function showComingSoon() {
-        const card = document.getElementById('substackCard');
-        const badge = card.querySelector('.status-badge');
-        badge.textContent = '🔔 Notify me';
-        badge.style.background = 'rgba(16, 185, 129, 0.12)';
-        badge.style.color = '#10b981';
-        badge.style.borderColor = 'rgba(16, 185, 129, 0.2)';
-        setTimeout(() => {
-            badge.textContent = 'Coming Soon';
-            badge.style.background = '';
-            badge.style.color = '';
-            badge.style.borderColor = '';
-        }, 2000);
-    }
-
-    loadLumaPreview();
-</script>
+        loadLumaPreview();
+    </script>
 
 </body>
+
 </html>

@@ -393,7 +393,7 @@ async def get_stats(hours: int = Query(24, ge=1, le=168)):
     return JSONResponse(stats)
 
 
-@app.get("/stats/summary")
+@app.get("/summary")
 async def get_stats_summary():
     """Returns aggregate summary numbers for the dashboard header."""
     now = datetime.utcnow()
@@ -724,14 +724,21 @@ async def get_bot_stats():
 
 
 @app.get("/dashboard.html")
+@app.get("/luma")
 async def dashboard():
-    with open("frontend/dashboard.html", "r") as f:
+    with open("frontend/dashboard/luma/dashboard.html", "r") as f:
+        return HTMLResponse(f.read())
+
+
+@app.get("/substack")
+async def substack():
+    with open("frontend/dashboard/substack/dashboard.html", "r") as f:
         return HTMLResponse(f.read())
 
 
 @app.get("/")
 async def home():
-    with open("index.html", "r") as f:
+    with open("frontend/index.html", "r") as f:
         return HTMLResponse(f.read())
 
 
