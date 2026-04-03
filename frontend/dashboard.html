@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luma Analytics — Real-Time Event Intelligence</title>
+    <meta name="description"
+        content="Real-time analytics dashboard for Luma events — geo tracking, live visitors, audience insights.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+
+<body>
+
+    <!-- ═══ Top Bar ═══ -->
+    <header class="topbar" id="topbar">
+        <div class="topbar-left">
+            <a href="/" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;">
+                <div class="logo-mark">L</div>
+                <div class="topbar-title"><span>Luma</span> Analytics</div>
+            </a>
+        </div>
+        <div class="topbar-right">
+            <div class="time-selector" id="timeSelector">
+                <button class="time-btn" data-hours="6">6h</button>
+                <button class="time-btn" data-hours="12">12h</button>
+                <button class="time-btn active" data-hours="24">24h</button>
+                <button class="time-btn" data-hours="168">7d</button>
+            </div>
+            <div class="live-badge">
+                <div class="live-dot"></div>
+                <span id="liveCount">0</span> live
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══ Main Content ═══ -->
+    <main class="main-content">
+
+        <!-- Welcome -->
+        <section class="welcome-section" id="welcomeSection">
+            <h1 class="welcome-title" id="welcomeTitle">Good evening 👋</h1>
+            <p class="welcome-sub">Here's what's happening with your Luma events right now.</p>
+        </section>
+
+        <!-- Stat Cards -->
+        <section class="stats-grid" id="statsGrid">
+            <div class="stat-card" id="statPageviews">
+                <div class="stat-label">Pageviews</div>
+                <div class="stat-value" id="valPageviews">—</div>
+                <div class="stat-tag">last 24 hours</div>
+                <div class="stat-icon">📊</div>
+            </div>
+            <div class="stat-card" id="statVisitors">
+                <div class="stat-label">Unique Visitors</div>
+                <div class="stat-value" id="valVisitors">—</div>
+                <div class="stat-tag">last 24 hours</div>
+                <div class="stat-icon">👥</div>
+            </div>
+            <div class="stat-card" id="statClicks">
+                <div class="stat-label">Total Clicks</div>
+                <div class="stat-value" id="valClicks">—</div>
+                <div class="stat-tag">last 24 hours</div>
+                <div class="stat-icon">🖱️</div>
+            </div>
+            <div class="stat-card" id="statLive">
+                <div class="stat-label">Live Now</div>
+                <div class="stat-value" id="valLive">—</div>
+                <div class="stat-tag">active visitors</div>
+                <div class="stat-icon">⚡</div>
+            </div>
+            <div class="stat-card" id="statBounce">
+                <div class="stat-label">Bounce Rate</div>
+                <div class="stat-value" id="valBounce">—</div>
+                <div class="stat-tag">lower is better</div>
+                <div class="stat-icon">📉</div>
+            </div>
+            <div class="stat-card" id="statTopCity">
+                <div class="stat-label">Top City</div>
+                <div class="stat-value" id="valTopCity" style="font-size:22px;">—</div>
+                <div class="stat-tag" id="tagTopCity">most visitors</div>
+                <div class="stat-icon">📍</div>
+            </div>
+        </section>
+
+        <!-- Charts Row -->
+        <section class="dashboard-grid" id="chartsSection">
+            <div class="card" id="chartPageviews">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📈</span> Traffic Overview</div>
+                    <span class="card-badge">Live</span>
+                </div>
+                <canvas id="pageviewsChart" height="240"></canvas>
+            </div>
+            <div class="card" id="chartReferrers">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🔗</span> Top Referrers</div>
+                    <span class="card-badge">24h</span>
+                </div>
+                <canvas id="referrersChart" height="240"></canvas>
+            </div>
+        </section>
+
+        <!-- Map + Cities -->
+        <section class="dashboard-grid" id="geoSection">
+            <div class="card card-full map-section" id="mapCard">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🌍</span> Global Audience Map</div>
+                    <span class="card-badge">Real-time</span>
+                </div>
+                <div id="map"></div>
+            </div>
+        </section>
+
+        <section class="dashboard-grid" id="citiesChartsSection">
+            <div class="card" id="citiesCard">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🏙️</span> Top Cities</div>
+                    <span class="card-badge" id="citiesCount">—</span>
+                </div>
+                <ul class="cities-list" id="citiesList"></ul>
+            </div>
+            <div class="card" id="pagesCard">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📄</span> Top Pages</div>
+                    <span class="card-badge">24h</span>
+                </div>
+                <table class="pages-table" id="pagesTable">
+                    <thead>
+                        <tr>
+                            <th>Page</th>
+                            <th>Views</th>
+                            <th>Visitors</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pagesBody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Funnel + Heatmap -->
+        <section class="dashboard-grid" id="toolsSection">
+            <div class="card" id="funnelCard">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🔻</span> Funnel Analysis</div>
+                    <span class="card-badge" id="funnelBadge">Demo</span>
+                </div>
+                <div class="funnel-presets">
+                    <button class="preset-btn" onclick="loadFunnelDemo()">📊 Run Demo Funnel</button>
+                    <button class="preset-btn"
+                        onclick="setFunnelPreset('sf-ai-meetup,founder-dinner-nyc,hack-night-austin')">🎫 Events
+                        Flow</button>
+                    <button class="preset-btn" onclick="setFunnelPreset('home,events,profile,settings')">🏠 User
+                        Journey</button>
+                </div>
+                <div class="funnel-input-group">
+                    <input type="text" class="funnel-input" id="funnelSteps"
+                        placeholder="Type page slugs separated by commas...">
+                    <button class="funnel-btn" onclick="loadFunnel()">Analyze</button>
+                </div>
+                <canvas id="funnelChart" height="240"></canvas>
+                <div class="funnel-dropoff" id="funnelDropoff"></div>
+            </div>
+            <div class="card" id="heatmapCard">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🔥</span> Click Heatmap</div>
+                    <span class="card-badge">lu.ma/sf-ai-meetup</span>
+                </div>
+                <div class="heatmap-wrapper" style="position:relative;border-radius:12px;overflow:hidden;">
+                    <img src="/static/heatmap-bg.png" id="heatmapBg"
+                        style="width:100%;display:block;border-radius:12px;opacity:0.45;" alt="">
+                    <canvas id="heatmapCanvas"
+                        style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bot Detection -->
+        <section class="dashboard-grid" id="botSection">
+            <div class="card card-full" id="botCard">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🛡️</span> Bot Detection & Filtering</div>
+                    <span class="card-badge" id="botFilterCount">— filters</span>
+                </div>
+                <div class="bot-shield" id="botShield">
+                    <div class="bot-shield-icon">🛡️</div>
+                    <div class="bot-shield-info">
+                        <h3>Protection Active</h3>
+                        <p id="botShieldDesc">Scanning all incoming traffic against known bot patterns...</p>
+                    </div>
+                </div>
+                <div class="bot-stats-row" id="botStatsRow">
+                    <div class="bot-stat">
+                        <div class="bot-stat-val" id="botTotal" style="color:var(--text-primary)">—</div>
+                        <div class="bot-stat-label">Total Requests</div>
+                    </div>
+                    <div class="bot-stat">
+                        <div class="bot-stat-val" id="botBlocked" style="color:var(--accent-red)">—</div>
+                        <div class="bot-stat-label">Bots Detected</div>
+                    </div>
+                    <div class="bot-stat">
+                        <div class="bot-stat-val" id="botHuman" style="color:var(--accent-green)">—</div>
+                        <div class="bot-stat-label">Human Traffic</div>
+                    </div>
+                </div>
+                <table class="bot-log" id="botLogTable">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>User Agent</th>
+                            <th>IP</th>
+                            <th>Target Page</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="botLogBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══ Live Ticker ═══ -->
+    <div class="live-ticker" id="liveTicker">
+        <div class="ticker-label">
+            <div class="live-dot"></div> LIVE FEED
+        </div>
+        <div class="ticker-items" id="tickerItems">
+            <div class="ticker-item">Waiting for events...</div>
+        </div>
+    </div>
+
+    <script src="/static/dashboard.js"></script>
+
+</body>
+
+</html>
