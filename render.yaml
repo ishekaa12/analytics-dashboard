@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: privacy-analytics-engine
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DB_PATH
+        value: /data/analytics.db
+      - key: PYTHON_VERSION
+        value: 3.10.12
+    disk:
+      name: analytics-disk
+      mountPath: /data
+      sizeGB: 1

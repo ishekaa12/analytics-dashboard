@@ -27,7 +27,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import declarative_base
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = "sqlite+aiosqlite:///./analytics.db"
+DB_PATH = os.environ.get("DB_PATH", "./analytics.db")
+DATABASE_URL = f"sqlite+aiosqlite:///{DB_PATH}"
 VALID_SITES = ("luma", "substack")
 
 BOT_UA_PATTERNS = re.compile(
