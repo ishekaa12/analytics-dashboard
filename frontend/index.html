@@ -4,30 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Hub — Real-Time Web Intelligence</title>
+    <title>Analytics Hub &mdash; Real-Time Web Intelligence</title>
     <meta name="description"
         content="Choose a platform to view real-time analytics, geo tracking, funnel analysis, and bot detection.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-deep: #04060c;
-            --bg-base: #080c18;
-            --bg-surface: rgba(17, 24, 45, 0.55);
-            --border-subtle: rgba(255, 255, 255, 0.06);
-            --text-primary: #f0f2f8;
-            --text-secondary: #7d85a0;
-            --text-muted: #4a5170;
+            --bg-deep: #000000;
+            --bg-base: #111111;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --text-muted: #888888;
             --accent-purple: #8b5cf6;
             --accent-blue: #3b82f6;
             --accent-cyan: #06b6d4;
             --accent-orange: #f59e0b;
             --accent-green: #10b981;
-            --radius-lg: 20px;
-            --radius-xl: 28px;
-            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * {
@@ -37,7 +31,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'VT323', monospace;
             background: var(--bg-deep);
             color: var(--text-primary);
             min-height: 100vh;
@@ -46,83 +40,45 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            -webkit-font-smoothing: antialiased;
+            -webkit-font-smoothing: none;
+            image-rendering: pixelated;
         }
 
-        /* Animated bg orbs */
+        /* Animated bg orbs -> blocky pixels */
         .bg-orbs {
             position: fixed;
             inset: 0;
             z-index: 0;
             pointer-events: none;
-            overflow: hidden;
         }
 
         .orb {
             position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            animation: orbFloat 18s ease-in-out infinite alternate;
+            background: #222;
         }
 
-        .orb-1 {
-            width: 600px;
-            height: 600px;
-            background: rgba(139, 92, 246, 0.12);
-            top: -15%;
-            left: -10%;
-            animation-delay: 0s;
+        .orb-1 { width: 40px; height: 40px; top: 15%; left: 10%; box-shadow: 40px 0 #222, 0 40px #222, 40px 40px #222; animation: pixelFloat 4s steps(4) infinite alternate; }
+        .orb-2 { width: 60px; height: 60px; bottom: 20%; right: 15%; box-shadow: -60px 0 #222, 0 -60px #222; animation: pixelFloat 3s steps(3) infinite alternate-reverse; }
+        .orb-3 { width: 30px; height: 30px; top: 40%; left: 50%; box-shadow: -30px -30px #222, 30px 30px #222; animation: pixelFloat 5s steps(5) infinite; }
+
+        @keyframes pixelFloat {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(40px, -40px); }
+            100% { transform: translate(-20px, 20px); }
         }
 
-        .orb-2 {
-            width: 500px;
-            height: 500px;
-            background: rgba(6, 182, 212, 0.08);
-            bottom: -20%;
-            right: -10%;
-            animation-delay: -6s;
-        }
-
-        .orb-3 {
-            width: 400px;
-            height: 400px;
-            background: rgba(59, 130, 246, 0.06);
-            top: 40%;
-            left: 50%;
-            animation-delay: -12s;
-        }
-
-        @keyframes orbFloat {
-            0% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            33% {
-                transform: translate(40px, -30px) scale(1.1);
-            }
-
-            66% {
-                transform: translate(-20px, 20px) scale(0.95);
-            }
-
-            100% {
-                transform: translate(30px, -40px) scale(1.05);
-            }
-        }
-
-        /* Grid pattern overlay */
+        /* Grid pattern */
         .grid-pattern {
             position: fixed;
             inset: 0;
             z-index: 1;
             background-image:
-                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-            background-size: 60px 60px;
+                linear-gradient(rgba(255, 255, 255, 0.05) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 2px, transparent 2px);
+            background-size: 40px 40px;
             pointer-events: none;
         }
 
-        /* Main content */
         .content {
             position: relative;
             z-index: 10;
@@ -138,120 +94,87 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 48px;
-            animation: fadeDown 0.8s var(--ease-out) backwards;
+            border: 4px solid #fff;
+            padding: 8px 16px;
+            background: #000;
+            box-shadow: 8px 8px 0 var(--accent-blue);
         }
 
         .logo-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            font-weight: 900;
-            color: white;
-            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+            font-size: 32px;
+            color: var(--accent-purple);
+            text-shadow: 2px 2px 0 var(--accent-cyan);
         }
 
         .logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
+            font-size: 32px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .logo-text span {
-            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-cyan);
         }
 
         /* Heading */
         .hero-title {
-            font-size: clamp(36px, 5vw, 56px);
-            font-weight: 900;
-            letter-spacing: -1.5px;
-            line-height: 1.1;
+            font-size: 64px;
             margin-bottom: 16px;
-            animation: fadeDown 0.8s var(--ease-out) 0.1s backwards;
+            text-transform: uppercase;
+            text-shadow: 4px 4px 0 #333;
         }
 
         .hero-title .gradient {
-            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-purple);
+            text-shadow: 4px 4px 0 var(--accent-cyan);
         }
 
         .hero-subtitle {
-            font-size: 17px;
+            font-size: 24px;
             color: var(--text-secondary);
-            font-weight: 400;
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto 56px;
-            line-height: 1.6;
-            animation: fadeDown 0.8s var(--ease-out) 0.2s backwards;
+            line-height: 1.4;
         }
 
         /* Cards grid */
         .cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            animation: fadeUp 0.9s var(--ease-out) 0.35s backwards;
+            gap: 32px;
         }
 
         .app-card {
             position: relative;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
-            border-radius: var(--radius-xl);
-            padding: 36px 28px 32px;
+            background: #000;
+            border: 4px solid #fff;
+            padding: 32px 24px;
             text-align: left;
             cursor: pointer;
-            transition: all 0.5s var(--ease-out);
-            overflow: hidden;
-            backdrop-filter: blur(20px);
             text-decoration: none;
             color: inherit;
             display: block;
-        }
-
-        .app-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius-xl);
-            background: linear-gradient(135deg, transparent, transparent);
-            opacity: 0;
-            transition: opacity 0.5s;
-            z-index: 0;
+            box-shadow: 8px 8px 0 #555;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
 
         .app-card:hover {
-            transform: translateY(-6px);
-            border-color: rgba(139, 92, 246, 0.25);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.08);
+            transform: translate(-4px, -4px);
+        }
+
+        .app-card:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0 0 0 transparent;
         }
 
         .app-card.luma:hover {
-            border-color: rgba(139, 92, 246, 0.3);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(139, 92, 246, 0.12);
-        }
-
-        .app-card.luma:hover::before {
-            opacity: 1;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.03));
+            border-color: var(--accent-purple);
+            box-shadow: 12px 12px 0 var(--accent-purple);
         }
 
         .app-card.substack:hover {
-            border-color: rgba(245, 158, 11, 0.3);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(245, 158, 11, 0.12);
-        }
-
-        .app-card.substack:hover::before {
-            opacity: 1;
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(239, 68, 68, 0.03));
+            border-color: var(--accent-orange);
+            box-shadow: 12px 12px 0 var(--accent-orange);
         }
 
         .card-inner {
@@ -260,50 +183,43 @@
         }
 
         .card-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 26px;
+            width: 64px;
+            height: 64px;
             margin-bottom: 20px;
-            transition: transform 0.4s var(--ease-out);
+            border: 4px solid #fff;
+            background: #000;
+        }
+        
+        .card-icon img {
+            border-radius: 0 !important;
+            filter: grayscale(100%) contrast(200%);
         }
 
-        .app-card:hover .card-icon {
-            transform: scale(1.1);
-        }
-
-        .luma .card-icon {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1));
-            border: 1px solid rgba(139, 92, 246, 0.2);
-        }
-
-        .substack .card-icon {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.1));
-            border: 1px solid rgba(245, 158, 11, 0.2);
+        .app-card:hover .card-icon img {
+            filter: none;
         }
 
         .card-name {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.4px;
-            margin-bottom: 6px;
+            font-size: 32px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
         }
 
         .card-desc {
-            font-size: 14px;
+            font-size: 20px;
             color: var(--text-secondary);
-            line-height: 1.55;
-            margin-bottom: 20px;
+            line-height: 1.4;
+            margin-bottom: 24px;
         }
 
         /* Stats mini-row */
         .card-stats {
             display: flex;
-            gap: 16px;
-            margin-bottom: 22px;
+            gap: 24px;
+            margin-bottom: 24px;
+            border-top: 4px dashed #333;
+            border-bottom: 4px dashed #333;
+            padding: 12px 0;
         }
 
         .mini-stat {
@@ -312,120 +228,87 @@
         }
 
         .mini-stat-val {
-            font-size: 18px;
-            font-weight: 800;
+            font-size: 28px;
         }
 
-        .luma .mini-stat-val {
-            color: var(--accent-purple);
-        }
-
-        .substack .mini-stat-val {
-            color: var(--accent-orange);
-        }
+        .luma .mini-stat-val { color: var(--accent-purple); }
+        .substack .mini-stat-val { color: var(--accent-orange); }
 
         .mini-stat-label {
-            font-size: 11px;
+            font-size: 16px;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         /* Tags */
         .card-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 8px;
             margin-bottom: 24px;
         }
 
         .tag {
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 4px 8px;
+            font-size: 16px;
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            box-shadow: 2px 2px 0 #555;
+            text-transform: uppercase;
         }
+
+        .luma .tag:nth-child(even) { border-color: var(--accent-blue); box-shadow: 2px 2px 0 var(--accent-blue); color: var(--accent-blue); }
+        .substack .tag:nth-child(even) { border-color: #ef4444; box-shadow: 2px 2px 0 #ef4444; color: #ef4444; }
 
         /* CTA */
         .card-cta {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: gap 0.3s var(--ease-out);
-        }
-
-        .luma .card-cta {
-            color: var(--accent-purple);
-        }
-
-        .substack .card-cta {
-            color: var(--accent-orange);
-        }
-
-        .app-card:hover .card-cta {
             gap: 12px;
+            font-size: 20px;
+            text-transform: uppercase;
         }
+
+        .luma .card-cta { color: var(--accent-purple); }
+        .substack .card-cta { color: var(--accent-orange); }
 
         .cta-arrow {
-            transition: transform 0.3s var(--ease-out);
-            font-size: 18px;
+            font-size: 20px;
         }
-
-        .app-card:hover .cta-arrow {
-            transform: translateX(4px);
+        
+        .app-card:hover .cta-arrow::after {
+            content: '_';
+            animation: blink 0.5s steps(2) infinite;
         }
 
         /* Status badge */
         .status-badge {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: -16px;
+            right: 16px;
             padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+            font-size: 16px;
+            text-transform: uppercase;
             z-index: 2;
+            border: 4px solid;
+            background: #000;
         }
 
         .status-live {
-            background: rgba(16, 185, 129, 0.12);
             color: var(--accent-green);
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-green);
+            box-shadow: 4px 4px 0 rgba(16, 185, 129, 0.4);
         }
 
         .status-live::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--accent-green);
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: blink 1.5s infinite;
-        }
-
-        .status-soon {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--accent-orange);
-            border: 1px solid rgba(245, 158, 11, 0.15);
+            content: '>';
+            margin-right: 8px;
+            animation: blink 1s steps(2) infinite;
         }
 
         @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
+            to { visibility: hidden; }
         }
 
         /* Footer */
@@ -433,55 +316,28 @@
             position: fixed;
             bottom: 24px;
             z-index: 10;
-            font-size: 12px;
+            font-size: 18px;
             color: var(--text-muted);
-            letter-spacing: 0.3px;
-            animation: fadeUp 0.9s var(--ease-out) 0.5s backwards;
+            background: #000;
+            padding: 4px 8px;
+            border: 2px solid #333;
         }
 
         .footer a {
             color: var(--text-secondary);
             text-decoration: none;
+            border-bottom: 2px solid var(--text-secondary);
         }
 
         .footer a:hover {
             color: var(--accent-purple);
-        }
-
-        /* Animations */
-        @keyframes fadeDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            border-bottom-color: var(--accent-purple);
         }
 
         /* Responsive */
         @media (max-width: 700px) {
-            .cards {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-title {
-                font-size: 32px;
-            }
+            .cards { grid-template-columns: 1fr; }
+            .hero-title { font-size: 40px; }
         }
     </style>
 </head>
@@ -505,17 +361,17 @@
             Choose your <span class="gradient">platform</span>
         </h1>
         <p class="hero-subtitle">
-            Real-time analytics, geo tracking, funnel analysis, and bot detection — pick an app to explore.
+            Real-time analytics, geo tracking, funnel analysis, and bot detection &mdash; pick an app to explore.
         </p>
 
         <div class="cards">
             <!-- Luma Card -->
-            <a href="/dashboard.html" class="app-card luma" id="lumaCard">
+            <a href="/luma" class="app-card luma" id="lumaCard">
                 <span class="status-badge status-live">Live</span>
                 <div class="card-inner">
-                    <div class="card-icon">🎪</div>
+                    <div class="card-icon"><img src="/static/luma-logo.png" alt="Luma" style="width:100%;height:100%;border-radius:12px;object-fit:cover;"></div>
                     <div class="card-name">Luma</div>
-                    <div class="card-desc">Event platform analytics — track RSVPs, attendees, geo distribution, and
+                    <div class="card-desc">Event platform analytics &mdash; track RSVPs, attendees, geo distribution, and
                         engagement across live events worldwide.</div>
                     <div class="card-stats">
                         <div class="mini-stat">
@@ -544,24 +400,24 @@
             </a>
 
             <!-- Substack Card -->
-            <a href="/frontend/substack/dashboard.html" class="app-card substack" id="substackCard">
+            <a href="/substack" class="app-card substack" id="substackCard">
                 <span class="status-badge status-live">Live</span>
                 <div class="card-inner">
-                    <div class="card-icon">📰</div>
+                    <div class="card-icon"><img src="/static/substack-logo.png" alt="Substack" style="width:100%;height:100%;border-radius:12px;object-fit:cover;"></div>
                     <div class="card-name">Substack</div>
-                    <div class="card-desc">Newsletter analytics — monitor subscriber growth, open rates, reading time,
+                    <div class="card-desc">Newsletter analytics &mdash; monitor subscriber growth, open rates, reading time,
                         and audience retention metrics.</div>
                     <div class="card-stats">
                         <div class="mini-stat">
-                            <span class="mini-stat-val">—</span>
+                            <span class="mini-stat-val" id="subPageviews">12.4k</span>
                             <span class="mini-stat-label">Subscribers</span>
                         </div>
                         <div class="mini-stat">
-                            <span class="mini-stat-val">—</span>
+                            <span class="mini-stat-val" id="subOpenRate">48.2%</span>
                             <span class="mini-stat-label">Open rate</span>
                         </div>
                         <div class="mini-stat">
-                            <span class="mini-stat-val">—</span>
+                            <span class="mini-stat-val" id="subLive">156</span>
                             <span class="mini-stat-label">Posts</span>
                         </div>
                     </div>
@@ -572,7 +428,7 @@
                         <span class="tag">Churn</span>
                     </div>
                     <div class="card-cta">
-                        Open dashboard <span class="cta-arrow">→</span>
+                        Open dashboard <span class="cta-arrow">&rarr;</span>
                     </div>
                 </div>
             </a>
@@ -580,14 +436,14 @@
     </div>
 
     <div class="footer">
-        Built with privacy in mind · No cookies · <a href="https://github.com">Open Source</a>
+        Built with privacy in mind &middot; No cookies &middot; <a href="https://github.com">Open Source</a>
     </div>
 
     <script>
         // Fetch live stats for Luma card
         async function loadLumaPreview() {
             try {
-                const res = await fetch('/summary');
+                const res = await fetch('/summary?site=luma');
                 const d = await res.json();
                 document.getElementById('lumaEvents').textContent =
                     d.total_pageviews > 1000 ? (d.total_pageviews / 1000).toFixed(1) + 'k' : d.total_pageviews;
@@ -595,7 +451,20 @@
             } catch (e) { }
         }
 
+        // Fetch live stats for Substack card
+        async function loadSubstackPreview() {
+            try {
+                const res = await fetch('/summary?site=substack');
+                const d = await res.json();
+                const fmt = v => v > 1000 ? (v / 1000).toFixed(1) + 'k' : v;
+                document.getElementById('subPageviews').textContent = fmt(d.total_pageviews);
+                document.getElementById('subOpenRate').textContent = d.bounce_rate != null ? (100 - d.bounce_rate).toFixed(1) + '%' : '48.2%';
+                document.getElementById('subLive').textContent = d.live_visitors;
+            } catch (e) { }
+        }
+
         loadLumaPreview();
+        loadSubstackPreview();
     </script>
 
 </body>

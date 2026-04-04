@@ -1,14 +1,69 @@
 // ═══════════════════════════════════════════════════
-// LUMA ANALYTICS DASHBOARD — Interactive Engine
+// UNIFIED ANALYTICS DASHBOARD — Interactive Engine
 // ═══════════════════════════════════════════════════
+
+const SITE = document.body.dataset.site || 'luma';
 
 const COUNTRY_FLAGS = {
     US: '🇺🇸', GB: '🇬🇧', DE: '🇩🇪', FR: '🇫🇷', JP: '🇯🇵', CA: '🇨🇦',
     AU: '🇦🇺', IN: '🇮🇳', SG: '🇸🇬', NL: '🇳🇱', AE: '🇦🇪', BR: '🇧🇷',
     SE: '🇸🇪', PT: '🇵🇹', KR: '🇰🇷', IL: '🇮🇱', KE: '🇰🇪', NG: '🇳🇬',
+    TW: '🇹🇼', CH: '🇨🇭', TH: '🇹🇭', TR: '🇹🇷', RU: '🇷🇺', CN: '🇨🇳',
 };
 
 let map, geoMarkers = [], pageviewsChart = null, referrersChart = null, funnelChartObj = null;
+
+// ─── API helper — auto-appends ?site= to every call ───
+function api(path) {
+    const sep = path.includes('?') ? '&' : '?';
+    return path + sep + 'site=' + SITE;
+}
+
+async function fetchJSON(path) {
+    const res = await fetch(api(path));
+    return res.json();
+}
+
+
+
+// Connect to /live in your dashboard JS
+const site = 'luma'; // or 'substack'
+const source = new EventSource(`/live?site=${site}`);
+
+source.onmessage = (e) => {
+    const event = JSON.parse(e.data);
+    if (!event) return; // null = keepalive ping
+
+    // Update your live counter
+    liveCount++;
+    document.getElementById('live-count').textContent = liveCount;
+
+    // Add to live feed list
+    addLiveFeedItem(event);
+
+    // If it's a pageview, refresh your stats
+    if (event.event_type === 'pageview') {
+        refreshStats();
+    }
+};
+
+source.onerror = () => {
+    console.warn('SSE disconnected, retrying...');
+};
+function addLiveFeedItem(event) {
+    const feed = document.getElementById('live-feed');
+    const item = document.createElement('div');
+    item.className = 'live-item';
+
+    const page = new URL(event.page_url).pathname;
+    const city = event.city || 'Unknown';
+    item.innerHTML = `<span class="dot">●</span> ${city} → <strong>${page}</strong>`;
+
+    feed.prepend(item);
+
+    // Keep only last 20 items
+    while (feed.children.length > 20) feed.lastChild.remove();
+}
 
 // ─── Greeting ───
 function setGreeting() {
@@ -16,11 +71,13 @@ function setGreeting() {
     let greeting = 'Good evening 👋';
     if (h < 12) greeting = 'Good morning ☀️';
     else if (h < 17) greeting = 'Good afternoon 👋';
-    document.getElementById('welcomeTitle').textContent = greeting;
+    const el = document.getElementById('welcomeTitle');
+    if (el) el.textContent = greeting;
 }
 
 // ─── Count-up animation ───
 function animateValue(el, end, suffix = '') {
+    if (!el) return;
     const duration = 1200;
     const start = 0;
     const startTime = performance.now();
@@ -45,7 +102,6 @@ function setupScrollReveal() {
             }
         });
     }, { threshold: 0.1 });
-
     document.querySelectorAll('.stat-card, .card, .map-section').forEach(el => {
         observer.observe(el);
     });
@@ -65,51 +121,62 @@ function staggerCards() {
 // ─── Chart.js defaults ───
 Chart.defaults.color = '#8b92a8';
 Chart.defaults.borderColor = 'rgba(255,255,255,0.04)';
-Chart.defaults.font.family = "'Inter', sans-serif";
-Chart.defaults.font.size = 12;
+Chart.defaults.font.family = "'VT323', monospace";
+Chart.defaults.font.size = 14;
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
 Chart.defaults.animation.duration = 1000;
 Chart.defaults.animation.easing = 'easeOutQuart';
 
+// Accent color for charts
+const ACCENT = getComputedStyle(document.body).getPropertyValue('--accent-main').trim() || '#8b5cf6';
+const ACCENT_RGB = getComputedStyle(document.body).getPropertyValue('--accent-main-rgb').trim() || '139, 92, 246';
+
 // ─── Load Summary Stats ───
 async function loadSummary() {
     try {
-        const res = await fetch('/summary');
-        const d = await res.json();
+        const d = await fetchJSON('/summary');
         animateValue(document.getElementById('valPageviews'), d.total_pageviews);
         animateValue(document.getElementById('valVisitors'), d.unique_visitors);
         animateValue(document.getElementById('valClicks'), d.total_clicks);
         animateValue(document.getElementById('valLive'), d.live_visitors);
         animateValue(document.getElementById('valBounce'), d.bounce_rate, '%');
-        document.getElementById('liveCount').textContent = d.live_visitors;
+        const liveEl = document.getElementById('liveCount');
+        if (liveEl) liveEl.textContent = d.live_visitors;
 
         if (d.top_city) {
             const flag = COUNTRY_FLAGS[d.top_city.country] || '🌐';
-            document.getElementById('valTopCity').textContent = flag + ' ' + d.top_city.city;
-            document.getElementById('tagTopCity').textContent = d.top_city.count + ' visitors';
+            const topCityEl = document.getElementById('valTopCity');
+            if (topCityEl) topCityEl.textContent = flag + ' ' + d.top_city.city;
+            const tagEl = document.getElementById('tagTopCity');
+            if (tagEl) tagEl.textContent = d.top_city.count + ' visitors';
         }
     } catch (e) { console.error('Summary error:', e); }
+}
+
+// Refresh stats
+function refreshStats() {
+    loadSummary();
+    loadPageviews();
+    loadReferrers();
 }
 
 // ─── Pageviews Chart ───
 async function loadPageviews() {
     try {
-        const res = await fetch('/stats');
-        const data = await res.json();
+        const data = await fetchJSON('/stats');
         const labels = data.map(d => {
             const dt = new Date(d.hour);
             return dt.getHours() + ':00';
         });
         const views = data.map(d => d.pageviews);
         const visitors = data.map(d => d.unique_visitors);
-        const clicks = data.map(d => d.clicks || 0);
 
         const ctx = document.getElementById('pageviewsChart').getContext('2d');
 
         const gradientPV = ctx.createLinearGradient(0, 0, 0, 240);
-        gradientPV.addColorStop(0, 'rgba(139, 92, 246, 0.25)');
-        gradientPV.addColorStop(1, 'rgba(139, 92, 246, 0)');
+        gradientPV.addColorStop(0, `rgba(${ACCENT_RGB}, 0.25)`);
+        gradientPV.addColorStop(1, `rgba(${ACCENT_RGB}, 0)`);
 
         const gradientUV = ctx.createLinearGradient(0, 0, 0, 240);
         gradientUV.addColorStop(0, 'rgba(6, 182, 212, 0.2)');
@@ -125,13 +192,13 @@ async function loadPageviews() {
                     {
                         label: 'Pageviews',
                         data: views,
-                        borderColor: '#8b5cf6',
+                        borderColor: ACCENT,
                         backgroundColor: gradientPV,
                         fill: true,
                         tension: 0.4,
                         pointRadius: 0,
                         pointHoverRadius: 6,
-                        pointHoverBackgroundColor: '#8b5cf6',
+                        pointHoverBackgroundColor: ACCENT,
                         pointHoverBorderColor: '#fff',
                         pointHoverBorderWidth: 2,
                         borderWidth: 2.5
@@ -169,7 +236,7 @@ async function loadPageviews() {
                 plugins: {
                     tooltip: {
                         backgroundColor: '#1a2035',
-                        borderColor: 'rgba(139,92,246,0.3)',
+                        borderColor: `rgba(${ACCENT_RGB}, 0.3)`,
                         borderWidth: 1,
                         padding: 12,
                         titleFont: { weight: '600' },
@@ -184,10 +251,9 @@ async function loadPageviews() {
 // ─── Referrers Chart ───
 async function loadReferrers() {
     try {
-        const res = await fetch('/referrers');
-        const data = await res.json();
+        const data = await fetchJSON('/referrers');
 
-        const colors = ['#8b5cf6', '#3b82f6', '#06b6d4', '#14b8a6', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#6366f1', '#8b92a8'];
+        const colors = [ACCENT, '#3b82f6', '#06b6d4', '#14b8a6', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#6366f1', '#8b92a8'];
 
         const ctx = document.getElementById('referrersChart').getContext('2d');
         if (referrersChart) referrersChart.destroy();
@@ -215,7 +281,7 @@ async function loadReferrers() {
                     },
                     tooltip: {
                         backgroundColor: '#1a2035',
-                        borderColor: 'rgba(139,92,246,0.3)',
+                        borderColor: `rgba(${ACCENT_RGB}, 0.3)`,
                         borderWidth: 1,
                         padding: 12,
                         cornerRadius: 10
@@ -234,8 +300,7 @@ function setFunnelPreset(val) {
 
 async function loadFunnelDemo() {
     try {
-        const res = await fetch('/funnel/demo');
-        const data = await res.json();
+        const data = await fetchJSON('/funnel/demo');
         document.getElementById('funnelBadge').textContent = 'Demo Active';
         renderFunnel(data);
     } catch (e) { console.error('Funnel demo error:', e); }
@@ -245,8 +310,7 @@ async function loadFunnel() {
     const steps = document.getElementById('funnelSteps').value;
     if (!steps) { loadFunnelDemo(); return; }
     try {
-        const res = await fetch('/funnel?steps=' + encodeURIComponent(steps));
-        const data = await res.json();
+        const data = await fetchJSON('/funnel?steps=' + encodeURIComponent(steps));
         document.getElementById('funnelBadge').textContent = 'Custom';
         renderFunnel(data);
     } catch (e) { console.error('Funnel error:', e); }
@@ -264,7 +328,7 @@ function renderFunnel(data) {
                 label: 'Visitors',
                 data: data.map(d => d.visitors),
                 backgroundColor: data.map((_, i) => {
-                    const hue = 260 - (i / Math.max(data.length - 1, 1)) * 80;
+                    const hue = SITE === 'substack' ? (20 + i * 8) : (260 - (i / Math.max(data.length - 1, 1)) * 80);
                     return `hsla(${hue}, 65%, 58%, 0.85)`;
                 }),
                 borderRadius: 8,
@@ -282,7 +346,7 @@ function renderFunnel(data) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1a2035', borderColor: 'rgba(139,92,246,0.3)',
+                    backgroundColor: '#1a2035', borderColor: `rgba(${ACCENT_RGB}, 0.3)`,
                     borderWidth: 1, padding: 12, cornerRadius: 10,
                     callbacks: {
                         afterLabel: function (ctx) {
@@ -299,27 +363,25 @@ function renderFunnel(data) {
         }
     });
 
-    // Render drop-off labels below chart
     const dropoffEl = document.getElementById('funnelDropoff');
-    dropoffEl.innerHTML = data.map((d, i) => {
-        if (i === 0) return `<span class="dropoff-step"><strong>${d.visitors}</strong> ${d.step}</span>`;
-        const prev = data[i - 1].visitors;
-        const pct = prev ? ((1 - d.visitors / prev) * 100).toFixed(0) : '0';
-        return `<span class="dropoff-arrow">→ -${pct}%</span><span class="dropoff-step"><strong>${d.visitors}</strong> ${d.step}</span>`;
-    }).join('');
+    if (dropoffEl) {
+        dropoffEl.innerHTML = data.map((d, i) => {
+            if (i === 0) return `<span class="dropoff-step"><strong>${d.visitors}</strong> ${d.step}</span>`;
+            const prev = data[i - 1].visitors;
+            const pct = prev ? ((1 - d.visitors / prev) * 100).toFixed(0) : '0';
+            return `<span class="dropoff-arrow">→ -${pct}%</span><span class="dropoff-step"><strong>${d.visitors}</strong> ${d.step}</span>`;
+        }).join('');
+    }
 }
 
 // ─── Heatmap with website screenshot background ───
 async function loadHeatmap() {
     try {
-        const res = await fetch('/heatmap?page=' + encodeURIComponent('https://lu.ma/sf-ai-meetup'));
-        const data = await res.json();
+        const heatmapPage = SITE === 'substack' ? '/' : 'https://lu.ma/sf-ai-meetup';
+        const data = await fetchJSON('/heatmap?page=' + encodeURIComponent(heatmapPage));
         const canvas = document.getElementById('heatmapCanvas');
-        const img = new Image();
-        img.src = "/static/heatmap-bg.png";
         const bgImg = document.getElementById('heatmapBg');
 
-        // Wait for background image to load to get proper dimensions
         function drawHeatmap() {
             const rect = bgImg.getBoundingClientRect();
             canvas.width = rect.width;
@@ -332,18 +394,22 @@ async function loadHeatmap() {
 
             const maxCount = Math.max(...data.map(d => d.count));
 
-            // Draw heatmap blobs
             data.forEach(click => {
                 const x = (click.x / 1920) * canvas.width;
                 const y = (click.y / 1080) * canvas.height;
                 const intensity = click.count / maxCount;
+
+                // Color scale: Blue (low) to Red (high)
+                // Hue 240 is Blue, Hue 0 is Red. We map intensity 0->1 to hue 240->0
+                const hue = Math.floor((1 - intensity) * 240);
+
                 const radius = 12 + intensity * 20;
 
                 // Outer glow
                 const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.8);
-                glow.addColorStop(0, `rgba(236, 72, 153, ${intensity * 0.35})`);
-                glow.addColorStop(0.5, `rgba(139, 92, 246, ${intensity * 0.15})`);
-                glow.addColorStop(1, 'rgba(139, 92, 246, 0)');
+                glow.addColorStop(0, `hsla(${hue}, 100%, 50%, ${intensity * 0.35 + 0.15})`);
+                glow.addColorStop(0.5, `hsla(${hue}, 100%, 50%, ${intensity * 0.15 + 0.05})`);
+                glow.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
                 ctx.beginPath();
                 ctx.fillStyle = glow;
                 ctx.arc(x, y, radius * 1.8, 0, Math.PI * 2);
@@ -351,9 +417,9 @@ async function loadHeatmap() {
 
                 // Inner hot dot
                 const dot = ctx.createRadialGradient(x, y, 0, x, y, radius * 0.5);
-                dot.addColorStop(0, `rgba(255, 100, 150, ${0.6 + intensity * 0.4})`);
-                dot.addColorStop(0.6, `rgba(236, 72, 153, ${intensity * 0.5})`);
-                dot.addColorStop(1, 'rgba(139, 92, 246, 0)');
+                dot.addColorStop(0, `hsla(${hue}, 100%, 75%, ${0.6 + intensity * 0.4})`);
+                dot.addColorStop(0.6, `hsla(${hue}, 100%, 55%, ${intensity * 0.5 + 0.2})`);
+                dot.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`);
                 ctx.beginPath();
                 ctx.fillStyle = dot;
                 ctx.arc(x, y, radius * 0.5, 0, Math.PI * 2);
@@ -388,10 +454,8 @@ function initMap() {
 
 async function loadGeoData() {
     try {
-        const res = await fetch('/geo');
-        const data = await res.json();
+        const data = await fetchJSON('/geo');
 
-        // Clear existing markers
         geoMarkers.forEach(m => map.removeLayer(m));
         geoMarkers = [];
 
@@ -401,7 +465,7 @@ async function loadGeoData() {
             const intensity = geo.count / maxCount;
             const radius = Math.max(5, Math.min(3 + Math.sqrt(geo.count) * 2.5, 22));
             const flag = COUNTRY_FLAGS[geo.country] || '🌐';
-            const hue = 220 + (1 - intensity) * 40;
+            const hue = SITE === 'substack' ? (20 + (1 - intensity) * 20) : (220 + (1 - intensity) * 40);
 
             const marker = L.circleMarker([geo.lat, geo.lng], {
                 radius: radius,
@@ -433,11 +497,12 @@ async function loadGeoData() {
 // ─── Top Cities ───
 async function loadCities() {
     try {
-        const res = await fetch('/geo/cities');
-        const data = await res.json();
+        const data = await fetchJSON('/geo/cities');
         const list = document.getElementById('citiesList');
+        if (!list) return;
         const maxVisitors = data.length ? data[0].visitors : 1;
-        document.getElementById('citiesCount').textContent = data.length + ' cities';
+        const countEl = document.getElementById('citiesCount');
+        if (countEl) countEl.textContent = data.length + ' cities';
 
         list.innerHTML = data.map((c, i) => {
             const flag = COUNTRY_FLAGS[c.country] || '🌐';
@@ -470,9 +535,9 @@ function flyToCity(lat, lng) {
 // ─── Top Pages ───
 async function loadPages() {
     try {
-        const res = await fetch('/pages');
-        const data = await res.json();
+        const data = await fetchJSON('/pages');
         const tbody = document.getElementById('pagesBody');
+        if (!tbody) return;
         tbody.innerHTML = data.map(p => {
             const shortUrl = p.page.replace('https://', '');
             return `
@@ -489,28 +554,25 @@ async function loadPages() {
 // ─── Live Ticker ───
 async function loadLiveTicker() {
     try {
-        const res = await fetch('/geo/live');
-        const data = await res.json();
+        const data = await fetchJSON('/geo/live');
         const container = document.getElementById('tickerItems');
-
-        if (!data.length) return;
+        if (!container || !data.length) return;
 
         const items = data.map(e => {
             const flag = COUNTRY_FLAGS[e.country] || '🌐';
             const ago = timeAgo(new Date(e.timestamp));
-            const shortPage = e.page.replace('https://lu.ma/', '');
+            const shortPage = e.page.replace(/^https?:\/\/[^/]+\//, '');
             return `
                 <div class="ticker-item">
                     <span class="flag">${flag}</span>
                     <span class="ticker-city">${e.city}</span>
                     visited
-                    <span class="ticker-page">${shortPage}</span>
+                    <span class="ticker-page">${shortPage || '/'}</span>
                     <span class="ticker-time">${ago}</span>
                 </div>
             `;
         }).join('');
 
-        // Duplicate for seamless scrolling
         container.innerHTML = items + items;
     } catch (e) { console.error('Ticker error:', e); }
 }
@@ -524,18 +586,16 @@ function timeAgo(date) {
 
 // ─── SSE Live Events ───
 function initLiveStream() {
-    const eventSource = new EventSource('/live');
+    const eventSource = new EventSource(api('/live'));
     let retryCount = 0;
     const MAX_RETRIES = 5;
 
-    eventSource.onopen = function () {
-        retryCount = 0;
-    };
+    eventSource.onopen = function () { retryCount = 0; };
 
-    eventSource.onerror = function (error) {
+    eventSource.onerror = function () {
         retryCount++;
         if (retryCount >= MAX_RETRIES) {
-            console.error('SSE connection failed too many times. Closing connection.');
+            console.error('SSE connection failed too many times.');
             eventSource.close();
         }
     };
@@ -546,8 +606,10 @@ function initLiveStream() {
             if (data && data.lat && data.lng) {
                 addLiveMarker(data);
                 const liveEl = document.getElementById('valLive');
-                const current = parseInt(liveEl.textContent.replace(/,/g, '')) || 0;
-                liveEl.textContent = (current + 1).toLocaleString();
+                if (liveEl) {
+                    const current = parseInt(liveEl.textContent.replace(/,/g, '')) || 0;
+                    liveEl.textContent = (current + 1).toLocaleString();
+                }
             }
         } catch (e) { }
     };
@@ -570,7 +632,6 @@ function addLiveMarker(data) {
         <div class="popup-count">Just now · <strong>Live</strong></div>
     `);
 
-    // Pulse and fade
     let opacity = 0.6;
     let radius = 14;
     const pulse = setInterval(() => {
@@ -589,7 +650,6 @@ document.querySelectorAll('.time-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
-        // TODO: reload data with new time range
         loadPageviews();
         loadSummary();
     });
@@ -601,28 +661,33 @@ function startAutoRefresh() {
         loadSummary();
         loadGeoData();
         loadLiveTicker();
-    }, 30000); // Every 30s
+    }, 30000);
 }
 
 // ─── Bot Detection ───
 async function loadBots() {
     try {
-        const res = await fetch('/bots');
-        const d = await res.json();
-        document.getElementById('botFilterCount').textContent = d.filters_active + ' filters';
-        document.getElementById('botTotal').textContent = d.total_requests.toLocaleString();
-        document.getElementById('botBlocked').textContent = d.bot_requests.toLocaleString();
-        document.getElementById('botHuman').textContent = d.human_requests.toLocaleString();
-        document.getElementById('botShieldDesc').textContent =
+        const d = await fetchJSON('/bots');
+        const filterEl = document.getElementById('botFilterCount');
+        if (filterEl) filterEl.textContent = d.filters_active + ' filters';
+        const totalEl = document.getElementById('botTotal');
+        if (totalEl) totalEl.textContent = d.total_requests.toLocaleString();
+        const blockedEl = document.getElementById('botBlocked');
+        if (blockedEl) blockedEl.textContent = d.bot_requests.toLocaleString();
+        const humanEl = document.getElementById('botHuman');
+        if (humanEl) humanEl.textContent = d.human_requests.toLocaleString();
+        const descEl = document.getElementById('botShieldDesc');
+        if (descEl) descEl.textContent =
             `${d.bot_percentage}% bot traffic detected and filtered · ${d.filters_active} patterns active`;
 
         const tbody = document.getElementById('botLogBody');
+        if (!tbody) return;
         if (d.recent_bots.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">No bots detected in last 24h — all clear! ✅</td></tr>';
         } else {
             tbody.innerHTML = d.recent_bots.map(b => {
                 const ago = timeAgo(new Date(b.timestamp));
-                const shortPage = b.page.replace('https://lu.ma/', '');
+                const shortPage = b.page.replace(/^https?:\/\/[^/]+/, '');
                 return `<tr>
                     <td><span class="bot-tag">🤖 BOT</span></td>
                     <td title="${b.user_agent}">${b.user_agent}</td>

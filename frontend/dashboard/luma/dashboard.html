@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 
-<body>
+<body data-site="luma">
 
     <!-- ═══ Top Bar ═══ -->
     <header class="topbar" id="topbar">
@@ -173,11 +173,9 @@
                     <div class="card-title"><span class="icon">🔥</span> Click Heatmap</div>
                     <span class="card-badge">lu.ma/sf-ai-meetup</span>
                 </div>
-                <div class="heatmap-wrapper" style="position:relative;border-radius:12px;overflow:hidden;">
-                    <img src="/static/heatmap-bg.png" id="heatmapBg"
-                        style="width:100%;display:block;border-radius:12px;opacity:0.45;" alt="">
-                    <canvas id="heatmapCanvas"
-                        style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+                <div class="heatmap-wrapper">
+                    <img src="/static/heatmap-bg.png" id="heatmapBg" alt="">
+                    <canvas id="heatmapCanvas"></canvas>
                 </div>
             </div>
         </section>

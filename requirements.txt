@@ -4,5 +4,6 @@ sqlalchemy
 aiosqlite
 pydantic
 aiohttp
+httpx
 sse-starlette
 greenlet

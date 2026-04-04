@@ -102,9 +102,9 @@ CLICK_ZONES = {
     ],
     "/chat": [
         (0.5, 0.85, 0.3, 0.04),    # message input
-        (0.85, 0.85, 0.05, 0.04),   # send button
-        (0.15, 0.3, 0.1, 0.2),     # chat list sidebar
-        (0.5, 0.5, 0.3, 0.15),     # message area
+        #(0.85, 0.85, 0.05, 0.04),   # send button
+        #(0.15, 0.3, 0.1, 0.2),     # chat list sidebar
+        #(0.5, 0.5, 0.3, 0.15),     # message area
     ],
 }
 
