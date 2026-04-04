@@ -2,6 +2,8 @@ import asyncio
 import hashlib
 import json
 import re
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, Optional
@@ -16,6 +18,8 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sse_starlette.sse import EventSourceResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 DATABASE_URL = "sqlite+aiosqlite:///./analytics.db"
 BOT_USER_AGENTS = [
@@ -127,7 +131,8 @@ class EventResponse(BaseModel):
 
 
 app = FastAPI(title="Luma Analytics — Real-Time Event Intelligence")
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
 app.add_middleware(
     CORSMiddleware,
@@ -447,6 +452,10 @@ async def get_stats_summary():
         "top_city": top_city
     })
 
+@app.get("/stats/summary")
+async def stats_summary_alias():
+    return await get_stats_summary()    
+
 
 @app.get("/referrers")
 async def get_referrers():
@@ -726,14 +735,12 @@ async def get_bot_stats():
 @app.get("/dashboard.html")
 @app.get("/luma")
 async def dashboard():
-    with open("frontend/dashboard/luma/dashboard.html", "r") as f:
-        return HTMLResponse(f.read())
+    return FileResponse(os.path.join(BASE_DIR, "frontend/dashboard/luma/dashboard.html"))
 
 
 @app.get("/substack")
 async def substack():
-    with open("frontend/dashboard/substack/dashboard.html", "r") as f:
-        return HTMLResponse(f.read())
+    return FileResponse(os.path.join(BASE_DIR, "frontend/dashboard/substack/dashboard.html"))
 
 
 @app.get("/")
@@ -744,4 +751,4 @@ async def home():
 
 @app.get("/heatmap-bg.png")
 async def heatmap_bg():
-    return FileResponse("heatmap-bg.png", media_type="image/png")
+    return FileResponse(os.path.join(BASE_DIR, "static/heatmap-bg.png"), media_type="image/png")

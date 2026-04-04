@@ -75,7 +75,7 @@ Chart.defaults.animation.easing = 'easeOutQuart';
 // ─── Load Summary Stats ───
 async function loadSummary() {
     try {
-        const res = await fetch('/stats/summary');
+        const res = await fetch('/summary');
         const d = await res.json();
         animateValue(document.getElementById('valPageviews'), d.total_pageviews);
         animateValue(document.getElementById('valVisitors'), d.unique_visitors);
@@ -187,7 +187,7 @@ async function loadReferrers() {
         const res = await fetch('/referrers');
         const data = await res.json();
 
-        const colors = ['#8b5cf6','#3b82f6','#06b6d4','#14b8a6','#10b981','#f59e0b','#ec4899','#ef4444','#6366f1','#8b92a8'];
+        const colors = ['#8b5cf6', '#3b82f6', '#06b6d4', '#14b8a6', '#10b981', '#f59e0b', '#ec4899', '#ef4444', '#6366f1', '#8b92a8'];
 
         const ctx = document.getElementById('referrersChart').getContext('2d');
         if (referrersChart) referrersChart.destroy();
@@ -285,7 +285,7 @@ function renderFunnel(data) {
                     backgroundColor: '#1a2035', borderColor: 'rgba(139,92,246,0.3)',
                     borderWidth: 1, padding: 12, cornerRadius: 10,
                     callbacks: {
-                        afterLabel: function(ctx) {
+                        afterLabel: function (ctx) {
                             const i = ctx.dataIndex;
                             if (i === 0) return '';
                             const prev = data[i - 1].visitors;
@@ -315,6 +315,8 @@ async function loadHeatmap() {
         const res = await fetch('/heatmap?page=' + encodeURIComponent('https://lu.ma/sf-ai-meetup'));
         const data = await res.json();
         const canvas = document.getElementById('heatmapCanvas');
+        const img = new Image();
+        img.src = "/static/heatmap-bg.png";
         const bgImg = document.getElementById('heatmapBg');
 
         // Wait for background image to load to get proper dimensions
@@ -419,7 +421,7 @@ async function loadGeoData() {
                 <div class="popup-count"><strong>${geo.count}</strong> visitors · ${geo.region}, ${geo.country}</div>
             `, { className: 'custom-popup' });
 
-            marker.on('click', function() {
+            marker.on('click', function () {
                 map.flyTo([geo.lat, geo.lng], 6, { duration: 1.2 });
             });
 
@@ -523,7 +525,22 @@ function timeAgo(date) {
 // ─── SSE Live Events ───
 function initLiveStream() {
     const eventSource = new EventSource('/live');
-    eventSource.onmessage = function(event) {
+    let retryCount = 0;
+    const MAX_RETRIES = 5;
+
+    eventSource.onopen = function () {
+        retryCount = 0;
+    };
+
+    eventSource.onerror = function (error) {
+        retryCount++;
+        if (retryCount >= MAX_RETRIES) {
+            console.error('SSE connection failed too many times. Closing connection.');
+            eventSource.close();
+        }
+    };
+
+    eventSource.onmessage = function (event) {
         try {
             const data = JSON.parse(event.data);
             if (data && data.lat && data.lng) {
@@ -532,7 +549,7 @@ function initLiveStream() {
                 const current = parseInt(liveEl.textContent.replace(/,/g, '')) || 0;
                 liveEl.textContent = (current + 1).toLocaleString();
             }
-        } catch (e) {}
+        } catch (e) { }
     };
 }
 
@@ -569,7 +586,7 @@ function addLiveMarker(data) {
 
 // ─── Time selector ───
 document.querySelectorAll('.time-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         // TODO: reload data with new time range
