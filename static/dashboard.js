@@ -718,6 +718,34 @@ tooltipStyle.textContent = `
 `;
 document.head.appendChild(tooltipStyle);
 
+// ─── Snapshot Capture Tool ───
+async function captureScreenshot() {
+    try {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "⏳ Capturing...";
+        btn.disabled = true;
+
+        const canvas = await html2canvas(document.body, {
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: "#06080f"
+        });
+
+        // Trigger native download
+        const a = document.createElement("a");
+        a.href = canvas.toDataURL("image/png");
+        a.download = "heatmap-bg.png";
+        a.click();
+
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    } catch (e) {
+        console.error("Screenshot failed:", e);
+        alert("Failed to capture screenshot.");
+    }
+}
+
 // ─── Initialize Everything ───
 window.addEventListener('DOMContentLoaded', () => {
     setGreeting();

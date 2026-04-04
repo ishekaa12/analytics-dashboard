@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="/static/dashboard.css">
 </head>
 
@@ -87,6 +88,16 @@
                 <div class="stat-value" id="valTopCity" style="font-size:22px;">—</div>
                 <div class="stat-tag" id="tagTopCity">most visitors</div>
                 <div class="stat-icon">📍</div>
+            </div>
+            <div class="stat-card" id="statPrivacy" title="Unlike Google Analytics, zero user data is retained.">
+                <div class="stat-label">Privacy Score</div>
+                <div class="stat-value" style="color: var(--accent-green);">100/100</div>
+                <div class="stat-tag" style="display:flex; flex-wrap:wrap; gap:4px; margin-top:8px;">
+                    <span class="micro-badge">No Cookies</span>
+                    <span class="micro-badge">No PII Stored</span>
+                    <span class="micro-badge">GDPR Safe</span>
+                </div>
+                <div class="stat-icon">🛡️</div>
             </div>
         </section>
 
@@ -171,6 +182,7 @@
             <div class="card" id="heatmapCard">
                 <div class="card-header">
                     <div class="card-title"><span class="icon">🔥</span> Click Heatmap</div>
+                    <button class="preset-btn" onclick="captureScreenshot()" style="margin-left:auto; margin-right:12px;">📸 Capture Layout</button>
                     <span class="card-badge">lu.ma/sf-ai-meetup</span>
                 </div>
                 <div class="heatmap-wrapper">

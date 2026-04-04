@@ -273,6 +273,7 @@
         .stat-card:nth-child(4)::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)); }
         .stat-card:nth-child(5)::before { background: linear-gradient(90deg, var(--accent-orange), var(--accent-red)); }
         .stat-card:nth-child(6)::before { background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple)); }
+        .stat-card:nth-child(7)::before { background: linear-gradient(90deg, var(--accent-green), var(--accent-teal)); }
 
         .stat-label {
             font-size: 36px;
@@ -295,6 +296,16 @@
             font-size: 36px;
             color: var(--text-muted);
             font-weight: 400;
+        }
+
+        .micro-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-green);
+            font-size: 20px;
         }
 
         .stat-icon {
@@ -780,12 +791,16 @@
             position: relative;
             border-radius: var(--radius-md);
             overflow: hidden;
+            height: 350px;
         }
         .heatmap-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            display: block;
-            border-radius: var(--radius-md);
-            opacity: 0.45;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.35;
         }
         .heatmap-wrapper canvas {
             position: absolute;
